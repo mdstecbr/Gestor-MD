@@ -4,10 +4,10 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
-from sqlalchemy import text  # <--- Resolve o erro do "text"
+from sqlalchemy import text  # <--- O tradutor do Banco de Dados
 import database
 import pandas as pd
-import os  # <--- Resolve o erro do "os"
+import os  # <--- O criador de Pastas
 import shutil
 import onedrive_api
 
