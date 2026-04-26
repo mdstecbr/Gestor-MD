@@ -30,7 +30,7 @@ class LoginRequest(BaseModel):
 class UsuarioRequest(BaseModel):
     nome: str
     email: Optional[str] = ""
-    usuario: Optional[str] = ""
+    usuario: Optional[str] = "" # Login
     senha: Optional[str] = ""
     perfil: str
 
@@ -182,23 +182,29 @@ def update_status(id: int, req: StatusOSRequest):
 @app.get("/api/usuarios")
 def list_users():
     with database.conectar() as conn:
-        df = pd.read_sql_query(text("SELECT id, nome, usuario, perfil, email FROM usuarios"), conn)
+        # Importante: Garantir que o ID venha sempre como número
+        df = pd.read_sql_query(text("SELECT id, nome, usuario, perfil, email FROM usuarios ORDER BY id ASC"), conn)
     return df.to_dict(orient="records")
 
 @app.post("/api/usuarios")
 def create_user(req: UsuarioRequest):
     with database.conectar() as conn:
-        conn.execute(text("INSERT INTO usuarios (nome, email, usuario, senha, perfil) VALUES (:n, :e, :u, :s, :p)"), {"n": req.nome, "e": req.email, "u": req.usuario, "s": req.senha, "p": req.perfil})
+        query = text("INSERT INTO usuarios (nome, email, usuario, senha, perfil) VALUES (:n, :e, :u, :s, :p)")
+        conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "s": req.senha, "p": req.perfil})
         conn.commit()
     return {"status": "ok"}
 
-@app.put("/api/usuarios/{id}")
-def update_user(id: int, req: UsuarioRequest):
+@app.put("/api/usuarios/{user_id}")
+def update_user(user_id: int, req: UsuarioRequest):
     with database.conectar() as conn:
-        if req.senha:
-            conn.execute(text("UPDATE usuarios SET nome=:n, email=:e, perfil=:p, senha=:s WHERE id=:id"), {"n": req.nome, "e": req.email, "p": req.perfil, "s": req.senha, "id": id})
+        if req.senha and req.senha.strip() != "":
+            # Se enviou senha nova, atualiza tudo
+            query = text("UPDATE usuarios SET nome=:n, email=:e, perfil=:p, senha=:s WHERE id=:id")
+            conn.execute(query, {"n": req.nome, "e": req.email, "p": req.perfil, "s": req.senha, "id": user_id})
         else:
-            conn.execute(text("UPDATE usuarios SET nome=:n, email=:e, perfil=:p WHERE id=:id"), {"n": req.nome, "e": req.email, "p": req.perfil, "id": id})
+            # Se não enviou senha, mantém a atual
+            query = text("UPDATE usuarios SET nome=:n, email=:e, perfil=:p WHERE id=:id")
+            conn.execute(query, {"n": req.nome, "e": req.email, "p": req.perfil, "id": user_id})
         conn.commit()
     return {"status": "ok"}
 
@@ -257,7 +263,7 @@ def baixar_arquivo(tipo: str, id: int, arquivo: str):
         raise HTTPException(status_code=404, detail="Arquivo não encontrado localmente")
 
 # --- SERVIR FRONTEND ---
-app.mount("/static", StaticFiles(directory="."), name="static")
+app.mount("/static", StaticFiles(directory=os.getcwd()), name="static")
 @app.get("/", response_class=HTMLResponse)
 async def serve():
     with open("index.html", "r", encoding="utf-8") as f: return f.read()
