@@ -261,8 +261,17 @@ def baixar_arquivo(tipo: str, id: int, arquivo: str):
         if os.path.exists(caminho): return FileResponse(path=caminho, filename=arquivo)
         raise HTTPException(status_code=404, detail="Arquivo não encontrado localmente")
 
-# --- SERVIR FRONTEND ---
+# --- SERVIR FRONTEND E PWA ---
 app.mount("/static", StaticFiles(directory=os.getcwd()), name="static")
+
+@app.get("/manifest.json")
+def get_manifest():
+    return FileResponse("manifest.json")
+
+@app.get("/sw.js")
+def get_sw():
+    return FileResponse("sw.js", media_type="application/javascript")
+
 @app.get("/", response_class=HTMLResponse)
 async def serve():
     with open("index.html", "r", encoding="utf-8") as f: return f.read()
