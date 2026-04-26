@@ -14,12 +14,12 @@ from fastapi.responses import RedirectResponse
 # --- LÓGICA DE AMBIENTE (NUVEM vs LOCAL) ---
 # Se a variável RENDER existir, usa o disco montado, senão, pasta local.
 IS_CLOUD = os_sys.environ.get("RENDER") is not None
-BASE_DIR = "/data" if IS_CLOUD else "."
+BASE_DIR = "."
 
-PASTA_DOCUMENTOS = os_sys.path.join(BASE_DIR, "Documentos_OS")
-PASTA_EVIDENCIAS = os_sys.path.join(BASE_DIR, "Evidencias_OS")
-os_sys.makedirs(PASTA_DOCUMENTOS, exist_ok=True)
-os_sys.makedirs(PASTA_EVIDENCIAS, exist_ok=True)
+PASTA_DOCUMENTOS = os.path.join(BASE_DIR, "Documentos_OS")
+PASTA_EVIDENCIAS = os.path.join(BASE_DIR, "Evidencias_OS")
+os.makedirs(PASTA_DOCUMENTOS, exist_ok=True)
+os.makedirs(PASTA_EVIDENCIAS, exist_ok=True)
 
 # --- MIGRAÇÃO AUTOMÁTICA DE BANCO DE DADOS ---
 def atualizar_banco():
