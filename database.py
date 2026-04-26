@@ -1,72 +1,30 @@
-import sqlite3
 import os
+from sqlalchemy import create_engine, text
 
-# Detecta se estamos rodando na Nuvem (Render) ou Localmente
-if os.environ.get("RENDER"):
-    DB_PATH = "/data/gestao_md.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 else:
-    DB_PATH = "gestao_md.db"
+    DATABASE_URL = "sqlite:///./gestao_local.db"
+
+engine = create_engine(DATABASE_URL)
 
 def conectar():
-    conn = sqlite3.connect(DB_PATH)
-    return conn
+    return engine.connect()
 
 def inicializar_banco():
-    conn = conectar()
-    cursor = conn.cursor()
-
-    # Tabela Usuários
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        email TEXT,
-        usuario TEXT NOT NULL UNIQUE,
-        senha TEXT NOT NULL,
-        perfil TEXT NOT NULL
-    )
-    ''')
-
-    # Cria o usuário Admin padrão se não existir
-    cursor.execute("SELECT id FROM usuarios WHERE usuario = 'admin'")
-    if not cursor.fetchone():
-        cursor.execute("INSERT INTO usuarios (nome, usuario, senha, perfil) VALUES ('Administrador', 'admin', 'admin123', 'Admin')")
-
-    # Tabela Ordens de Serviço
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS ordens_servico (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        empresa TEXT NOT NULL,
-        numero_os TEXT,
-        cliente TEXT NOT NULL,
-        plataforma TEXT,
-        endereco TEXT,
-        servico_descricao TEXT NOT NULL,
-        relatorio_tecnico TEXT,
-        status TEXT DEFAULT 'Pendente',
-        id_tecnico INTEGER,
-        data_programada DATE,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (id_tecnico) REFERENCES usuarios(id)
-    )
-    ''')
-
-    # Tabela Financeiro
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS financeiro (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        empresa TEXT NOT NULL,
-        descricao TEXT NOT NULL,
-        valor REAL NOT NULL,
-        tipo TEXT NOT NULL,
-        categoria TEXT,
-        status_pagamento TEXT DEFAULT 'Pendente',
-        status_nf TEXT DEFAULT 'Pendente',
-        data_emissao DATE,
-        data_pagamento DATE,
-        data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-
-    conn.commit()
-    conn.close()
+    try:
+        with conectar() as conn:
+            conn.execute(text("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, nome TEXT, email TEXT, usuario TEXT UNIQUE, senha TEXT, perfil TEXT)"))
+            
+            check_admin = conn.execute(text("SELECT id FROM usuarios WHERE usuario = 'admin'")).fetchone()
+            if not check_admin:
+                conn.execute(text("INSERT INTO usuarios (nome, usuario, senha, perfil) VALUES ('Administrador', 'admin', 'admin123', 'Admin')"))
+            
+            conn.execute(text("CREATE TABLE IF NOT EXISTS ordens_servico (id SERIAL PRIMARY KEY, empresa TEXT, numero_os TEXT, cliente TEXT, plataforma TEXT, endereco TEXT, servico_descricao TEXT, relatorio_tecnico TEXT, status TEXT DEFAULT 'Pendente', id_tecnico INTEGER, data_programada DATE, data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"))
+            
+            conn.execute(text("CREATE TABLE IF NOT EXISTS financeiro (id SERIAL PRIMARY KEY, empresa TEXT, descricao TEXT, valor REAL, tipo TEXT, categoria TEXT, status_pagamento TEXT DEFAULT 'Pendente', status_nf TEXT DEFAULT 'Pendente', data_emissao DATE, data_pagamento DATE, data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"))
+            conn.commit()
+            print("Banco de dados inicializado com sucesso!")
+    except Exception as e:
+        print(f"ALERTA: Erro ao conectar no Banco de Dados: {e}")
