@@ -182,7 +182,6 @@ def update_status(id: int, req: StatusOSRequest):
 @app.get("/api/usuarios")
 def list_users():
     with database.conectar() as conn:
-        # Importante: Garantir que o ID venha sempre como número
         df = pd.read_sql_query(text("SELECT id, nome, usuario, perfil, email FROM usuarios ORDER BY id ASC"), conn)
     return df.to_dict(orient="records")
 
@@ -198,13 +197,13 @@ def create_user(req: UsuarioRequest):
 def update_user(user_id: int, req: UsuarioRequest):
     with database.conectar() as conn:
         if req.senha and req.senha.strip() != "":
-            # Se enviou senha nova, atualiza tudo
-            query = text("UPDATE usuarios SET nome=:n, email=:e, perfil=:p, senha=:s WHERE id=:id")
-            conn.execute(query, {"n": req.nome, "e": req.email, "p": req.perfil, "s": req.senha, "id": user_id})
+            # Se enviou senha nova, atualiza tudo (incluindo login)
+            query = text("UPDATE usuarios SET nome=:n, email=:e, usuario=:u, perfil=:p, senha=:s WHERE id=:id")
+            conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "p": req.perfil, "s": req.senha, "id": user_id})
         else:
             # Se não enviou senha, mantém a atual
-            query = text("UPDATE usuarios SET nome=:n, email=:e, perfil=:p WHERE id=:id")
-            conn.execute(query, {"n": req.nome, "e": req.email, "p": req.perfil, "id": user_id})
+            query = text("UPDATE usuarios SET nome=:n, email=:e, usuario=:u, perfil=:p WHERE id=:id")
+            conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "p": req.perfil, "id": user_id})
         conn.commit()
     return {"status": "ok"}
 
