@@ -12,28 +12,22 @@ import smtplib
 import shutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import onedrive_api
-from datetime import datetime
 from datetime import datetime, timedelta
-
-def hora_brasil():
-    return datetime.utcnow() - timedelta(hours=3)
+import onedrive_api
 
 # --- CONFIGURAÇÃO DE AMBIENTE E PASTAS ---
 BASE_DIR = "."
-PASTA_DOCS = os.path.join(BASE_DIR, "Documentos_OS")
-PASTA_EVID = os.path.join(BASE_DIR, "Evidencias_OS")
+# Pastas de Armazenamento Local (Fallback do OneDrive)
+PASTAS = ["Documentos_OS", "Evidencias_OS", "Comprovantes_FIN"]
+for pasta in PASTAS:
+    os.makedirs(os.path.join(BASE_DIR, pasta), exist_ok=True)
 
-# Garante que as pastas locais existem (fallback caso OneDrive não esteja configurado)
-os.makedirs(PASTA_DOCS, exist_ok=True)
-os.makedirs(PASTA_EVID, exist_ok=True)
-
-# Inicializa a estrutura do Banco de Dados (Postgres ou SQLite)
+# Inicializa o Banco de Dados (Postgres ou SQLite)
 database.inicializar_banco()
 
-app = FastAPI(title="Gestor MD API")
+app = FastAPI(title="Gestor MD - Sistema Integrado", version="2.0.0")
 
-# Configuração de CORS para permitir que o Frontend comunique com o Backend
+# Configuração de CORS (Segurança para o Browser)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,14 +36,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CONFIGURAÇÃO DE E-MAIL (GMAIL SMTP) ---
+# --- UTILITÁRIOS: HORÁRIO E E-MAIL ---
+
+def hora_brasil():
+    """Retorna o horário atual de Brasília (UTC-3)"""
+    return datetime.utcnow() - timedelta(hours=3)
+
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 
 def disparar_email(destinatario: str, assunto: str, corpo_html: str):
-    """Função auxiliar para envio de e-mails via Gmail SMTP"""
+    """Envia e-mails automáticos via SMTP Gmail"""
     if not SMTP_EMAIL or not SMTP_PASSWORD or not destinatario:
-        print(f"Aviso: E-mail para {destinatario} ignorado (Faltam credenciais SMTP).")
+        print(f"⚠️ SMTP não configurado. E-mail para {destinatario} não enviado.")
         return
     try:
         msg = MIMEMultipart()
@@ -63,11 +62,11 @@ def disparar_email(destinatario: str, assunto: str, corpo_html: str):
         server.login(SMTP_EMAIL, SMTP_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"E-mail enviado com sucesso para: {destinatario}")
+        print(f"📧 E-mail enviado com sucesso para: {destinatario}")
     except Exception as e:
-        print(f"Falha ao enviar e-mail: {e}")
+        print(f"❌ Erro ao disparar e-mail: {e}")
 
-# --- MODELOS DE DADOS (PYDANTIC) ---
+# --- MODELOS DE DADOS (VALIDAÇÃO API) ---
 
 class LoginRequest(BaseModel):
     usuario: str
@@ -90,6 +89,8 @@ class FinanceiroRequest(BaseModel):
     status_nf: str
     data_emissao: Optional[str] = None
     data_pagamento: Optional[str] = None
+    id_os: Optional[int] = None # Vínculo com OS (Centro de Custo)
+    conciliado: Optional[str] = "Não" # Novo campo para o Contador
 
 class OSRequest(BaseModel):
     empresa: str
@@ -122,9 +123,9 @@ def login(req: LoginRequest):
         user = conn.execute(query, {"u": req.usuario, "s": req.senha}).fetchone()
         if user:
             return {"id": user[0], "nome": user[1], "perfil": user[2]}
-    raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
+    raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
-# --- ROTAS DE DASHBOARD ---
+# --- ROTAS DE DASHBOARD (COM FILTROS) ---
 
 @app.get("/api/dashboard")
 def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
@@ -132,12 +133,11 @@ def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
         f_fin = "WHERE status_pagamento = 'Pago'"
         f_os = "WHERE 1=1"
         params = {}
-        
         if inicio and fim:
             f_fin += " AND date(data_pagamento) BETWEEN :inicio AND :fim"
             f_os += " AND date(data_programada) BETWEEN :inicio AND :fim"
             params = {"inicio": inicio, "fim": fim}
-            
+        
         df_fin = pd.read_sql_query(text(f"SELECT valor, tipo FROM financeiro {f_fin}"), conn, params=params)
         df_os = pd.read_sql_query(text(f"SELECT status FROM ordens_servico {f_os}"), conn, params=params)
         
@@ -148,23 +148,29 @@ def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
         "grafico_os": df_os['status'].value_counts().to_dict() if not df_os.empty else {}
     }
 
-# --- ROTAS FINANCEIRAS (CRUD) ---
+# --- ROTAS FINANCEIRAS (VERSÃO 2.0 - CONTABILIDADE) ---
 
 @app.get("/api/financeiro")
-def list_financeiro():
+def list_financeiro(inicio: Optional[str]=None, fim: Optional[str]=None):
     with database.conectar() as conn:
-        df = pd.read_sql_query(text("SELECT * FROM financeiro ORDER BY id DESC"), conn)
+        query = "SELECT * FROM financeiro"
+        params = {}
+        if inicio and fim:
+            query += " WHERE date(COALESCE(data_pagamento, data_registro)) BETWEEN :i AND :f"
+            params = {"i": inicio, "f": fim}
+        query += " ORDER BY id DESC"
+        df = pd.read_sql_query(text(query), conn, params=params)
     return df.to_dict(orient="records")
 
 @app.post("/api/financeiro")
 def add_financeiro(req: FinanceiroRequest):
     with database.conectar() as conn:
-        query = text("""INSERT INTO financeiro (empresa, descricao, valor, tipo, categoria, status_pagamento, status_nf, data_emissao, data_pagamento) 
-                        VALUES (:emp, :des, :val, :tip, :cat, :spg, :snf, :dem, :dpg)""")
+        query = text("""INSERT INTO financeiro (empresa, descricao, valor, tipo, categoria, status_pagamento, status_nf, data_emissao, data_pagamento, id_os, conciliado) 
+                        VALUES (:emp, :des, :val, :tip, :cat, :spg, :snf, :dem, :dpg, :ios, :conc)""")
         conn.execute(query, {
-            "emp": req.empresa, "des": req.descricao, "val": req.valor, "tip": req.tipo,
-            "cat": req.categoria, "spg": req.status_pagamento, "snf": req.status_nf,
-            "dem": req.data_emissao, "dpg": req.data_pagamento
+            "emp": req.empresa, "des": req.descricao, "val": req.valor, "tip": req.tipo, "cat": req.categoria,
+            "spg": req.status_pagamento, "snf": req.status_nf, "dem": req.data_emissao, "dpg": req.data_pagamento,
+            "ios": req.id_os, "conc": req.conciliado
         })
         conn.commit()
     return {"status": "ok"}
@@ -173,15 +179,16 @@ def add_financeiro(req: FinanceiroRequest):
 def update_financeiro(id: int, req: FinanceiroRequest):
     with database.conectar() as conn:
         query = text("""UPDATE financeiro SET empresa=:emp, descricao=:des, valor=:val, tipo=:tip, categoria=:cat, 
-                        status_pagamento=:spg, status_nf=:snf, data_emissao=:dem, data_pagamento=:dpg WHERE id=:id""")
+                        status_pagamento=:spg, status_nf=:snf, data_emissao=:dem, data_pagamento=:dpg, id_os=:ios, conciliado=:conc WHERE id=:id""")
         conn.execute(query, {
             "emp": req.empresa, "des": req.descricao, "val": req.valor, "tip": req.tipo, "cat": req.categoria,
-            "spg": req.status_pagamento, "snf": req.status_nf, "dem": req.data_emissao, "dpg": req.data_pagamento, "id": id
+            "spg": req.status_pagamento, "snf": req.status_nf, "dem": req.data_emissao, "dpg": req.data_pagamento,
+            "ios": req.id_os, "conc": req.conciliado, "id": id
         })
         conn.commit()
     return {"status": "ok"}
 
-# --- ROTAS DE ORDENS DE SERVIÇO (CRUD) ---
+# --- ROTAS DE ORDENS DE SERVIÇO ---
 
 @app.get("/api/os")
 def list_os():
@@ -200,15 +207,12 @@ def add_os(req: OSRequest, tasks: BackgroundTasks):
             "end": req.endereco, "des": req.servico_descricao, "tec": req.id_tecnico, "dat": req.data_programada, "sta": req.status
         })
         os_id = res.fetchone()[0]
-        
-        # Busca e-mail do técnico para notificação
         tec = conn.execute(text("SELECT nome, email FROM usuarios WHERE id = :id"), {"id": req.id_tecnico}).fetchone()
         conn.commit()
 
     if tec and tec[1]:
-        corpo = f"<h2>Nova OS Atribuída: #{req.numero_os}</h2><p>Olá {tec[0]}, você tem uma nova tarefa para o cliente {req.cliente}. Verifique o App.</p>"
-        tasks.add_task(disparar_email, tec[1], f"Nova OS MD: #{req.numero_os}", corpo)
-        
+        html = f"<h2>Nova OS Atribuída: #{req.numero_os}</h2><p>Olá {tec[0]}, tens uma nova tarefa para o cliente {req.cliente}. Verifica o App.</p>"
+        tasks.add_task(disparar_email, tec[1], f"Nova OS MD: #{req.numero_os}", html)
     return {"id": os_id}
 
 @app.put("/api/os/{id}")
@@ -278,8 +282,8 @@ def create_user(req: UsuarioRequest, tasks: BackgroundTasks):
         conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "s": req.senha, "p": req.perfil})
         conn.commit()
     if req.email:
-        corpo = f"<h2>Bem-vindo ao Gestor MD</h2><p>Login: {req.usuario}<br>Senha: {req.senha}</p>"
-        tasks.add_task(disparar_email, req.email, "Acesso ao Sistema MD", corpo)
+        html = f"<h2>Bem-vindo à MD Soluções</h2><p>O seu acesso foi criado.<br>Login: {req.usuario}<br>Senha: {req.senha}</p>"
+        tasks.add_task(disparar_email, req.email, "Acesso ao Sistema", html)
     return {"status": "ok"}
 
 @app.put("/api/usuarios/{id}")
@@ -303,8 +307,6 @@ def get_tecnicos_list():
         res = conn.execute(text("SELECT id, nome FROM usuarios WHERE perfil='Tecnico'")).fetchall()
     return [{"id": r[0], "nome": r[1]} for r in res]
 
-# --- ROTA DE DELETE GENÉRICA ---
-
 @app.delete("/api/{rota}/{id}")
 def delete_item(rota: str, id: int):
     tabela = "ordens_servico" if rota == "os" else "usuarios" if rota == "usuarios" else "financeiro"
@@ -313,12 +315,20 @@ def delete_item(rota: str, id: int):
         conn.commit()
     return {"status": "ok"}
 
-# --- GESTÃO DE FICHEIROS (ONEDRIVE / LOCAL) ---
+# --- UPLOADS E GESTÃO DE FICHEIROS (MULTIMÓDULO) ---
 
-@app.post("/api/os/{id}/{tipo}")
-async def upload_file(id: int, tipo: str, arquivos: List[UploadFile] = File(...)):
-    pasta_nome = "Documentos_OS" if tipo == "documentos" else "Evidencias_OS"
-    path_dest = f"{pasta_nome}/OS_{id}"
+@app.post("/api/upload/{modulo}/{id}")
+async def upload_file(modulo: str, id: int, arquivos: List[UploadFile] = File(...)):
+    # Mapeamento de pastas por módulo
+    mapeamento = {
+        "documentos": f"Documentos_OS/OS_{id}",
+        "evidencias": f"Evidencias_OS/OS_{id}",
+        "comprovantes": f"Comprovantes_FIN/FIN_{id}"
+    }
+    if modulo not in mapeamento:
+        raise HTTPException(status_code=400, detail="Módulo inválido")
+    
+    path_dest = mapeamento[modulo]
     
     for f in arquivos:
         content = await f.read()
@@ -331,21 +341,30 @@ async def upload_file(id: int, tipo: str, arquivos: List[UploadFile] = File(...)
                 buffer.write(content)
     return {"status": "ok"}
 
-@app.get("/api/os/{id}/arquivos")
-def list_os_files(id: int):
-    docs, evids = [], []
+@app.get("/api/arquivos/{modulo}/{id}")
+def list_files(modulo: str, id: int):
+    lista = []
     if not onedrive_api.is_configured():
-        p_d = os.path.join(BASE_DIR, f"Documentos_OS/OS_{id}")
-        p_e = os.path.join(BASE_DIR, f"Evidencias_OS/OS_{id}")
-        if os.path.exists(p_d): docs = os.listdir(p_d)
-        if os.path.exists(p_e): evids = os.listdir(p_e)
-    return {"documentos": docs, "evidencias": evids}
+        mapeamento = {
+            "documentos": f"Documentos_OS/OS_{id}",
+            "evidencias": f"Evidencias_OS/OS_{id}",
+            "comprovantes": f"Comprovantes_FIN/FIN_{id}"
+        }
+        if modulo in mapeamento:
+            p = os.path.join(BASE_DIR, mapeamento[modulo])
+            if os.path.exists(p): lista = os.listdir(p)
+    return {"arquivos": lista}
 
-@app.get("/api/download/{tipo}/{id}/{arquivo}")
-def download_file(tipo: str, id: int, arquivo: str):
-    pasta_nome = "Documentos_OS" if tipo == "documentos" else "Evidencias_OS"
-    path_dest = f"{pasta_nome}/OS_{id}"
+@app.get("/api/download/{modulo}/{id}/{arquivo}")
+def download_file(modulo: str, id: int, arquivo: str):
+    mapeamento = {
+        "documentos": f"Documentos_OS/OS_{id}",
+        "evidencias": f"Evidencias_OS/OS_{id}",
+        "comprovantes": f"Comprovantes_FIN/FIN_{id}"
+    }
+    if modulo not in mapeamento: raise HTTPException(status_code=400)
     
+    path_dest = mapeamento[modulo]
     if onedrive_api.is_configured():
         link = onedrive_api.get_download_link(arquivo, path_dest)
         if link: return RedirectResponse(url=link)
