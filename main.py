@@ -14,6 +14,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import onedrive_api
 from datetime import datetime
+from datetime import datetime, timedelta
+
+def hora_brasil():
+    return datetime.utcnow() - timedelta(hours=3)
 
 # --- CONFIGURAÇÃO DE AMBIENTE E PASTAS ---
 BASE_DIR = "."
@@ -238,9 +242,10 @@ def update_os_status(id: int, req: StatusOSRequest):
 
 @app.post("/api/ponto")
 def bater_ponto(req: PontoRequest):
+    dh_br = hora_brasil().strftime("%Y-%m-%d %H:%M:%S")
     with database.conectar() as conn:
-        query = text("INSERT INTO registro_ponto (id_tecnico, tipo, latitude, longitude) VALUES (:id, :t, :la, :lo)")
-        conn.execute(query, {"id": req.id_tecnico, "t": req.tipo, "la": req.lat, "lo": req.lng})
+        query = text("INSERT INTO registro_ponto (id_tecnico, tipo, latitude, longitude, data_hora) VALUES (:id, :t, :la, :lo, :dh)")
+        conn.execute(query, {"id": req.id_tecnico, "t": req.tipo, "la": req.lat, "lo": req.lng, "dh": dh_br})
         conn.commit()
     return {"status": "ok"}
 
@@ -279,15 +284,18 @@ def create_user(req: UsuarioRequest, tasks: BackgroundTasks):
 
 @app.put("/api/usuarios/{id}")
 def update_user(id: int, req: UsuarioRequest):
-    with database.conectar() as conn:
-        if req.senha:
-            query = text("UPDATE usuarios SET nome=:n, email=:e, usuario=:u, perfil=:p, senha=:s WHERE id=:id")
-            conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "p": req.perfil, "s": req.senha, "id": id})
-        else:
-            query = text("UPDATE usuarios SET nome=:n, email=:e, usuario=:u, perfil=:p WHERE id=:id")
-            conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "p": req.perfil, "id": id})
-        conn.commit()
-    return {"status": "ok"}
+    try:
+        with database.conectar() as conn:
+            if req.senha:
+                query = text("UPDATE usuarios SET nome=:n, email=:e, usuario=:u, perfil=:p, senha=:s WHERE id=:id")
+                conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "p": req.perfil, "s": req.senha, "id": id})
+            else:
+                query = text("UPDATE usuarios SET nome=:n, email=:e, usuario=:u, perfil=:p WHERE id=:id")
+                conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "p": req.perfil, "id": id})
+            conn.commit()
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/tecnicos")
 def get_tecnicos_list():

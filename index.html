@@ -567,13 +567,18 @@
         }
 
         async function salvarUsuario(e) {
-            e.preventDefault(); const id = document.getElementById('usr-id').value;
-            const payload = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value };
-            try { 
-                const res = await fetch(id ? `${API_URL}/usuarios/${id}` : `${API_URL}/usuarios`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }); 
-                if(!res.ok) throw new Error(); fecharModal('modal-user'); loadEquipe(); 
-            } catch(err) { alert("Erro ao salvar usuário."); }
+    e.preventDefault(); const id = document.getElementById('usr-id').value;
+    const payload = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value };
+    try { 
+        const res = await fetch(id ? `${API_URL}/usuarios/${id}` : `${API_URL}/usuarios`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }); 
+        if(!res.ok) {
+            const err = await res.json();
+            alert(`ERRO DO BANCO DE DADOS: ${err.detail}`);
+            return;
         }
+        fecharModal('modal-user'); loadEquipe(); 
+    } catch(err) { alert("Erro de comunicação com o servidor."); }
+}
 
         // GLOBAL DELETE
         async function deletarItem(rota, id) { 
