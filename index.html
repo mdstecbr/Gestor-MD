@@ -33,7 +33,7 @@
 <body class="bg-darkbg text-slate-300 h-screen flex overflow-hidden">
 
     <div id="modal-fin" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-        <div class="bg-cardbg p-6 rounded-lg w-full max-w-[500px] border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-cardbg p-6 rounded-lg w-full max-w-[550px] border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 id="modal-fin-title" class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-money-bill-transfer mr-2 text-brand"></i>Lançamento Financeiro</h3>
             <form onsubmit="salvarFinanceiro(event)">
                 <input type="hidden" id="fin-id">
@@ -42,21 +42,32 @@
                 <label class="block text-xs font-bold text-slate-500 mb-1">DESCRIÇÃO DO LANÇAMENTO</label>
                 <input type="text" id="fin-desc" placeholder="Ex: Pagamento Fornecedor X" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE EMISSÃO</label><input type="date" id="fin-data-emissao" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE PAGAMENTO</label><input type="date" id="fin-data-pagamento" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">VALOR (R$)</label><input type="number" step="0.01" id="fin-valor" placeholder="0.00" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label><select id="fin-tipo" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Entrada</option><option>Saída</option></select></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">VALOR (R$)</label><input type="number" step="0.01" id="fin-valor" placeholder="0,00" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label><select id="fin-tipo" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Entrada</option><option>Saída</option></select></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE EMISSÃO</label><input type="date" id="fin-data-emissao" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE PAGAMENTO</label><input type="date" id="fin-data-pagamento" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">STATUS PGTO</label><select id="fin-status-pgto" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Pago</option><option>Pendente</option><option>Cancelada</option></select></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">CATEGORIA</label><select id="fin-categoria" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Serviços</option><option>Peças/Equipamentos</option><option>Infraestrutura</option><option>Impostos</option><option>Outros</option></select></div>
                 </div>
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">VINCULAR OS (Centro Custo)</label><input type="number" id="fin-id-os" placeholder="Nº da OS (Opcional)" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-emerald-500 mb-1"><i class="fa-solid fa-check-double mr-1"></i>CONCILIADO?</label><select id="fin-conciliado" class="w-full bg-slate-900 border border-emerald-600 rounded p-2 text-emerald-400 font-bold"><option>Não</option><option>Sim</option></select></div>
+                </div>
                 <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-500 mb-1">NOTA FISCAL</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">NOTA FISCAL / STATUS</label>
                     <select id="fin-status-nf" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Pendente</option><option>Emitida</option><option>Não se aplica</option></select>
                 </div>
+                
+                <div class="mt-4 border-t border-slate-700 pt-4">
+                    <label class="block text-xs font-bold mb-2 text-brand"><i class="fa-solid fa-paperclip mr-1"></i> ANEXAR COMPROVANTE OU NF</label>
+                    <input type="file" id="fin-docs" multiple class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:bg-slate-700 file:text-white hover:file:bg-slate-600">
+                    <div id="fin-arquivos-list" class="mt-2 text-xs text-slate-400 space-y-1"></div>
+                </div>
+
                 <div class="flex justify-end gap-3 mt-6 border-t border-slate-700 pt-4">
                     <button type="button" onclick="fecharModal('modal-fin')" class="px-4 py-2 text-slate-400 hover:text-white transition">Cancelar</button>
                     <button type="submit" class="px-6 py-2 bg-brand text-white font-bold rounded hover:bg-blue-500 transition shadow-lg">Confirmar Registro</button>
@@ -77,25 +88,24 @@
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA PROGRAMADA</label><input type="date" id="os-data" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                 </div>
                 <label class="block text-xs font-bold text-slate-500 mb-1">CLIENTE / NOME DO LOCAL</label>
-                <input type="text" id="os-cliente" placeholder="Ex: Condomínio Bosque" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <input type="text" id="os-cliente" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <label class="block text-xs font-bold text-slate-500 mb-1">ENDEREÇO / REFERÊNCIA</label>
-                <input type="text" id="os-endereco" placeholder="Ex: Rua das Flores, 123" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <input type="text" id="os-endereco" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <label class="block text-xs font-bold text-slate-500 mb-1">PLATAFORMA (Opcional)</label>
-                <input type="text" id="os-plataforma" placeholder="Ex: Chamado X" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
-                <label class="block text-xs font-bold text-slate-500 mb-1">DESCRIÇÃO DA ATIVIDADE (Para o Técnico)</label>
+                <input type="text" id="os-plataforma" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <label class="block text-xs font-bold text-slate-500 mb-1">DESCRIÇÃO DA ATIVIDADE</label>
                 <textarea id="os-desc" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm"></textarea>
-                <label class="block text-xs font-bold text-brand mb-1">RELATÓRIO DE EXECUÇÃO</label>
-                <textarea id="os-relatorio" placeholder="O que foi realizado ficará salvo aqui..." class="w-full bg-slate-900/50 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm"></textarea>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">TÉCNICO</label><select id="os-tecnico" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></select></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">STATUS ATUAL</label><select id="os-status" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Pendente</option><option>Em Execução</option><option>Concluído</option><option>Cancelada</option></select></div>
                 </div>
                 <div class="mt-4 border-t border-slate-700 pt-4">
-                    <label class="block text-xs font-bold mb-2 text-brand"><i class="fa-solid fa-paperclip mr-1"></i> ANEXAR DOCUMENTOS</label>
+                    <label class="block text-xs font-bold mb-2 text-brand"><i class="fa-solid fa-paperclip mr-1"></i> ANEXAR MANUAIS / DOCS</label>
                     <input type="file" id="os-docs" multiple class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:bg-slate-700 file:text-white hover:file:bg-slate-600">
+                    <div id="os-arquivos-list" class="mt-2 text-xs text-slate-400 space-y-1"></div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6 border-t border-slate-700 pt-4">
-                    <button type="button" onclick="fecharModal('modal-os')" class="px-4 py-2 text-slate-400 hover:text-white transition">Sair</button>
+                    <button type="button" onclick="fecharModal('modal-os')" class="px-4 py-2 text-slate-400 hover:text-white transition">Cancelar</button>
                     <button type="submit" class="px-6 py-2 bg-brand text-white font-bold rounded hover:bg-blue-500 transition shadow-lg">Salvar OS</button>
                 </div>
             </form>
@@ -119,7 +129,7 @@
                 <input type="password" id="usr-senha" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white">
                 <p id="senha-hint" class="text-[10px] text-slate-500 hidden mb-3 mt-1">Deixe vazio para não alterar</p>
                 <label class="block text-xs font-bold text-slate-500 mb-1 mt-3">PERFIL</label>
-                <select id="usr-perfil" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-4"><option>Tecnico</option><option>Admin</option></select>
+                <select id="usr-perfil" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-4"><option>Tecnico</option><option>Admin</option><option>Contador</option></select>
                 <div class="flex justify-end gap-3 border-t border-slate-700 pt-4">
                     <button type="button" onclick="fecharModal('modal-user')" class="px-4 py-2 text-slate-400">Cancelar</button>
                     <button type="submit" class="px-6 py-2 bg-brand text-white font-bold rounded">Salvar</button>
@@ -130,9 +140,7 @@
 
     <div id="login-screen" class="w-full flex items-center justify-center bg-darkbg absolute inset-0 z-50">
         <div class="bg-cardbg p-8 md:p-10 rounded-xl border border-slate-700 shadow-2xl w-[90%] md:w-[400px] text-center">
-            <div class="w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <img src="./static/logo.png" alt="Logo MD" class="h-16 w-auto" onerror="this.onerror=null; this.src='logo.png';">
-            </div>
+            <div class="w-20 h-20 flex items-center justify-center mx-auto mb-6"><img src="./static/logo.png" alt="Logo MD" class="h-16 w-auto" onerror="this.onerror=null; this.src='logo.png';"></div>
             <h1 class="text-2xl font-bold text-white mb-2">MD Soluções</h1>
             <p class="text-slate-500 text-sm mb-8 font-medium tracking-wide">GESTOR EMPRESARIAL</p>
             <form onsubmit="realizarLogin(event)">
@@ -145,22 +153,14 @@
     </div>
 
     <div id="admin-screen" class="hidden w-full flex flex-col md:flex-row h-full relative">
-        
         <div class="md:hidden w-full bg-sidebarbg border-b border-slate-800 p-4 flex justify-between items-center z-30">
-            <div class="flex items-center gap-3">
-                <img src="./static/logo.png" alt="Logo" class="h-8 w-auto">
-                <span class="text-lg font-black text-white italic">GESTOR MD Soluções</span>
-            </div>
+            <div class="flex items-center gap-3"><span class="text-lg font-black text-white italic">GESTOR.MD</span></div>
             <button onclick="toggleMenu()" class="text-white text-2xl focus:outline-none"><i class="fa-solid fa-bars"></i></button>
         </div>
 
         <aside id="sidebar-admin" class="w-64 bg-sidebarbg border-r border-slate-800 flex flex-col absolute md:relative z-40 h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
             <div class="p-6 md:p-8 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <img src="./static/logo.png" class="h-10 w-auto hidden md:block" onerror="this.onerror=null; this.src='logo.png';">
-                    <span class="text-xl font-black text-white tracking-tighter italic hidden md:block">GESTOR MD Soluções</span>
-                    <span class="text-xl font-black text-white tracking-tighter italic md:hidden">MENU</span>
-                </div>
+                <div class="flex items-center gap-3"><span class="text-xl font-black text-white tracking-tighter italic hidden md:block">GESTOR.MD</span><span class="text-xl font-black text-white tracking-tighter italic md:hidden">MENU</span></div>
                 <button onclick="toggleMenu()" class="md:hidden text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
@@ -172,8 +172,9 @@
                 <p class="text-[10px] font-bold text-slate-600 px-4 mt-6 mb-2 tracking-widest">GESTÃO</p>
                 <button onclick="navegar('equipe')" id="nav-equipe" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-user-gear w-8"></i>Equipe e Acessos</button>
             </nav>
-            <div class="p-6 bg-slate-900/50 border-t border-slate-800">
-                <div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-brand flex items-center justify-center text-white font-bold" id="admin-initial">A</div><div class="flex-1 overflow-hidden"><p id="admin-name" class="text-sm font-bold text-white truncate"></p><p class="text-[10px] text-brand font-bold uppercase tracking-wider">Administrador</p></div><button onclick="logout()" class="text-slate-500 hover:text-red-400 transition"><i class="fa-solid fa-power-off text-lg"></i></button></div>
+            <div class="p-6 bg-slate-900/50 border-t border-slate-800 flex items-center justify-between">
+                <div><p id="admin-name" class="text-sm font-bold text-white truncate"></p><p class="text-[10px] text-brand font-bold uppercase tracking-wider" id="admin-perfil-label">Administrador</p></div>
+                <button onclick="logout()" class="text-slate-500 hover:text-red-400 transition"><i class="fa-solid fa-power-off text-lg"></i></button>
             </div>
         </aside>
 
@@ -181,94 +182,78 @@
 
         <main class="flex-1 overflow-y-auto p-4 md:p-10 flex flex-col w-full">
             
-            <div id="global-filter" class="mb-6 md:mb-8 flex flex-col md:flex-row md:flex-wrap gap-4 md:items-end bg-cardbg p-4 rounded-xl border border-slate-700 shadow-lg shrink-0">
+            <div id="global-filter" class="mb-6 flex flex-col md:flex-row md:flex-wrap gap-4 md:items-end bg-cardbg p-4 rounded-xl border border-slate-700 shadow-lg">
                 <div class="w-full md:w-auto">
                     <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest"><i class="fa-solid fa-calendar-days mr-1"></i> Período</label>
-                    <select id="filtro-periodo" onchange="mudarPeriodoFiltro()" class="bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-brand focus:outline-none w-full md:w-48">
-                        <option value="tudo">Todo o Histórico</option>
-                        <option value="hoje">Hoje</option>
-                        <option value="semana">Esta Semana</option>
-                        <option value="mes">Este Mês</option>
-                        <option value="custom">Personalizado...</option>
-                    </select>
+                    <select id="filtro-periodo" onchange="mudarPeriodoFiltro()" class="bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-sm text-white w-full md:w-48"><option value="tudo">Todo o Histórico</option><option value="hoje">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option><option value="custom">Personalizado...</option></select>
                 </div>
                 <div id="filtro-datas" class="hidden flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                    <div class="w-full md:w-auto"><label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Início</label><input type="date" id="filtro-inicio" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white"></div>
-                    <div class="w-full md:w-auto"><label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Fim</label><input type="date" id="filtro-fim" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white"></div>
+                    <div class="w-full md:w-auto"><label class="block text-[10px] font-bold text-slate-500 mb-1">Início</label><input type="date" id="filtro-inicio" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white"></div>
+                    <div class="w-full md:w-auto"><label class="block text-[10px] font-bold text-slate-500 mb-1">Fim</label><input type="date" id="filtro-fim" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white"></div>
                 </div>
-                <button onclick="aplicarFiltroData()" class="w-full md:w-auto bg-brand hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-lg transition shadow-lg text-sm flex items-center justify-center"><i class="fa-solid fa-filter mr-2"></i> Aplicar Filtro</button>
+                <button onclick="aplicarFiltroData()" class="w-full md:w-auto bg-brand hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-lg transition shadow-lg text-sm flex items-center justify-center"><i class="fa-solid fa-filter mr-2"></i> Filtrar</button>
             </div>
 
             <div id="page-dashboard" class="page-view flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Entradas (Pago)</p><h4 id="dash-in" class="text-xl md:text-2xl font-black text-emerald-400">R$ 0,00</h4></div>
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Saídas (Pago)</p><h4 id="dash-out" class="text-xl md:text-2xl font-black text-red-400">R$ 0,00</h4></div>
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-brand"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Caixa Líquido</p><h4 id="dash-total" class="text-xl md:text-2xl font-black text-white">R$ 0,00</h4></div>
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Ordens de Serviço</p><h4 id="dash-os" class="text-xl md:text-2xl font-black text-white">0</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Receitas (Pagas)</p><h4 id="dash-in" class="text-xl md:text-2xl font-black text-emerald-400">R$ 0,00</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Despesas (Pagas)</p><h4 id="dash-out" class="text-xl md:text-2xl font-black text-red-400">R$ 0,00</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-brand"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Saldo Líquido</p><h4 id="dash-total" class="text-xl md:text-2xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Ordens de Serviço</p><h4 id="dash-os" class="text-xl md:text-2xl font-black text-white">0</h4></div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
-                    <div class="bg-cardbg p-4 md:p-6 rounded-xl border border-slate-700 shadow-lg"><h4 class="text-sm font-bold text-slate-400 mb-4 uppercase flex items-center"><i class="fa-solid fa-chart-line mr-2 text-brand"></i>Fluxo Financeiro</h4><div class="relative h-64 w-full"><canvas id="chartFinanceiro"></canvas></div></div>
-                    <div class="bg-cardbg p-4 md:p-6 rounded-xl border border-slate-700 shadow-lg"><h4 class="text-sm font-bold text-slate-400 mb-4 uppercase flex items-center"><i class="fa-solid fa-chart-pie mr-2 text-brand"></i>Status Geral (OS)</h4><div class="relative h-64 w-full flex justify-center"><canvas id="chartOS"></canvas></div></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700"><h4 class="text-sm font-bold text-slate-400 mb-4 uppercase"><i class="fa-solid fa-chart-pie mr-2 text-brand"></i>Status Geral (OS)</h4><div class="relative h-64 w-full flex justify-center"><canvas id="chartOS"></canvas></div></div>
                 </div>
             </div>
 
             <div id="page-ponto" class="page-view hidden flex-1">
-                <div class="flex justify-between items-end mb-6"><div><h2 class="text-2xl md:text-3xl font-bold text-white">Controle de Ponto</h2></div></div>
-                <div class="bg-cardbg rounded-xl border border-slate-700 shadow-xl overflow-x-auto">
-                    <table class="w-full text-sm text-left min-w-[600px]">
-                        <thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Técnico</th><th class="p-4">Tipo de Registro</th><th class="p-4">Data e Hora</th><th class="p-4">Localização (GPS)</th></tr></thead>
-                        <tbody id="tb-ponto-admin" class="divide-y divide-slate-700/50"></tbody>
-                    </table>
+                <h2 class="text-2xl font-bold text-white mb-6">Controle de Ponto</h2>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Técnico</th><th class="p-4">Registro</th><th class="p-4">Data/Hora</th><th class="p-4">GPS</th></tr></thead><tbody id="tb-ponto-admin" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
 
             <div id="page-financeiro" class="page-view hidden flex-1">
-                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl md:text-3xl font-bold text-white">Financeiro</h2></div><button onclick="abrirNovaFin()" class="bg-brand hover:bg-blue-500 text-white w-full md:w-auto px-6 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i>Novo Lançamento</button></div>
-                <div class="bg-cardbg rounded-xl border border-slate-700 shadow-xl overflow-x-auto">
-                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data</th><th class="p-4">Descrição / Unidade</th><th class="p-4">Valor</th><th class="p-4">Status</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-financeiro" class="divide-y divide-slate-700/50"></tbody></table>
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl font-bold text-white">Financeiro Contábil</h2></div><button onclick="abrirNovaFin()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i>Novo Lançamento</button></div>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[800px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data</th><th class="p-4">Descrição</th><th class="p-4">Valor</th><th class="p-4">Status / NF</th><th class="p-4 text-center">Conciliado</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-financeiro" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
 
             <div id="page-os" class="page-view hidden flex-1">
-                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl md:text-3xl font-bold text-white">Ordens de Serviço</h2></div><button onclick="abrirNovaOS()" class="bg-brand hover:bg-blue-500 text-white w-full md:w-auto px-6 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-bolt mr-2"></i>Emitir OS</button></div>
-                <div class="bg-cardbg rounded-xl border border-slate-700 shadow-xl overflow-x-auto">
-                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data Prog.</th><th class="p-4">ID/OS</th><th class="p-4">Cliente / Endereço</th><th class="p-4">Técnico</th><th class="p-4">Status</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-os" class="divide-y divide-slate-700/50"></tbody></table>
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl font-bold text-white">Ordens de Serviço</h2></div><button onclick="abrirNovaOS()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-bolt mr-2"></i>Emitir OS</button></div>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data Prog.</th><th class="p-4">OS</th><th class="p-4">Cliente</th><th class="p-4">Técnico</th><th class="p-4">Status</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-os" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
 
             <div id="page-equipe" class="page-view hidden flex-1">
-                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl md:text-3xl font-bold text-white">Colaboradores</h2></div><button onclick="abrirNovoUser()" class="bg-brand hover:bg-blue-500 text-white w-full md:w-auto px-6 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-user-plus mr-2"></i>Novo Usuário</button></div>
-                <div class="bg-cardbg rounded-xl border border-slate-700 shadow-xl overflow-x-auto">
-                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Nome do Membro</th><th class="p-4">Usuário</th><th class="p-4">Perfil</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-equipe" class="divide-y divide-slate-700/50"></tbody></table>
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl font-bold text-white">Equipe</h2></div><button onclick="abrirNovoUser()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-user-plus mr-2"></i>Novo Usuário</button></div>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Nome</th><th class="p-4">Usuário</th><th class="p-4">Perfil</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-equipe" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
         </main>
     </div>
 
     <div id="tech-screen" class="hidden w-full flex-col h-full bg-darkbg overflow-hidden relative">
-        <header class="bg-sidebarbg border-b border-slate-800 p-4 md:p-6 flex justify-between items-center shadow-lg z-10 shrink-0">
-            <div>
-                <p id="tech-name" class="text-white font-bold text-lg"></p>
-                <p class="text-[10px] text-brand font-black uppercase tracking-widest">Portal do Técnico</p>
-            </div>
+        <header class="bg-sidebarbg border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 shrink-0">
+            <div><p id="tech-name" class="text-white font-bold text-lg"></p><p class="text-[10px] text-brand font-black uppercase tracking-widest">Portal do Técnico</p></div>
             <button onclick="logout()" class="w-10 h-10 rounded-full bg-slate-800 text-red-400 flex items-center justify-center transition active:scale-95 shadow-md"><i class="fa-solid fa-power-off"></i></button>
         </header>
         
         <div class="p-4 bg-cardbg border-b border-slate-700 shrink-0 shadow-md">
             <div class="flex items-center justify-between bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
-                <div>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Estado de Ponto</p>
-                    <p id="txt-ponto-status" class="text-white font-black text-sm">Verificando...</p>
-                </div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Estado de Ponto</p><p id="txt-ponto-status" class="text-white font-black text-sm">Verificando...</p></div>
                 <button id="btn-ponto" onclick="registrarPonto()" class="px-6 py-3 rounded-xl font-black text-xs transition active:scale-95 shadow-lg"></button>
             </div>
         </div>
 
         <div class="bg-sidebarbg border-b border-slate-700 shrink-0 pt-4 pb-2 px-2 shadow-md">
             <div class="flex justify-between items-center px-4 mb-4">
-                <button onclick="navegarSemanaTech(-1)" class="w-8 h-8 rounded-full bg-slate-800 text-white hover:bg-brand transition flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+                <button onclick="navegarSemanaTech(-1)" class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
                 <span id="tech-week-label" class="text-xs font-bold text-white uppercase tracking-widest">Semana</span>
-                <button onclick="navegarSemanaTech(1)" class="w-8 h-8 rounded-full bg-slate-800 text-white hover:bg-brand transition flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+                <button onclick="navegarSemanaTech(1)" class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
             <div id="tech-calendar-days" class="flex justify-between items-center px-2"></div>
         </div>
@@ -277,27 +262,19 @@
     </div>
 
     <script>
-        // ATIVAÇÃO PWA (APP INSTALL)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => console.log('PWA OK')).catch(err => console.log('PWA Erro', err));
-            });
-        }
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); }); }
 
         const API_URL = window.location.origin + '/api';
-        
         const formatMoeda = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
         const formatData = (d) => { if(!d) return "-"; const x = new Date(d); x.setMinutes(x.getMinutes() + x.getTimezoneOffset()); return isNaN(x.getTime()) ? d : x.toLocaleDateString('pt-BR'); };
         const getStrDate = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().split('T')[0]; };
         
-        let id_tecnico_logado = null; 
+        let id_usuario_logado = null; let perfil_logado = null;
         let arrayFinanceiro = []; let arrayOS = []; let arrayUsuarios = [];
-        let chartFin = null; let chartOs = null;
-
+        let chartOs = null;
         let dataInicioGlobal = ""; let dataFimGlobal = "";
         let techCurrentWeekStart = new Date();
 
-        // LÓGICA DE INTERFACE & MENU RESPONSIVO
         function toggleMenu() {
             document.getElementById('sidebar-admin').classList.toggle('-translate-x-full');
             document.getElementById('overlay-menu').classList.toggle('hidden');
@@ -309,9 +286,7 @@
             document.getElementById(`page-${pagina}`).classList.remove('hidden');
             if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
             document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
-            
-            if (window.innerWidth < 768 && document.getElementById('overlay-menu').classList.contains('hidden') === false) { toggleMenu(); }
-            
+            if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
             if (pagina === 'ponto') loadPontoAdmin();
         }
 
@@ -319,7 +294,7 @@
         function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
         function logout() { location.reload(); }
 
-        // LÓGICA DE FILTRO DE DATA
+        // --- FILTROS DE DATA ---
         function mudarPeriodoFiltro() {
             const val = document.getElementById('filtro-periodo').value;
             const boxDatas = document.getElementById('filtro-datas');
@@ -329,369 +304,236 @@
             if (val === 'tudo') { dataInicioGlobal = ""; dataFimGlobal = ""; }
             else if (val === 'hoje') { dataInicioGlobal = getStrDate(hoje); dataFimGlobal = getStrDate(hoje); }
             else if (val === 'semana') {
-                const diaSemana = hoje.getDay() === 0 ? 7 : hoje.getDay();
-                const inicioSemana = new Date(hoje); inicioSemana.setDate(hoje.getDate() - diaSemana + 1);
-                const fimSemana = new Date(hoje); fimSemana.setDate(hoje.getDate() + (7 - diaSemana));
-                dataInicioGlobal = getStrDate(inicioSemana); dataFimGlobal = getStrDate(fimSemana);
+                const dia = hoje.getDay() || 7; const i = new Date(hoje); i.setDate(hoje.getDate() - dia + 1); const f = new Date(hoje); f.setDate(hoje.getDate() + (7 - dia));
+                dataInicioGlobal = getStrDate(i); dataFimGlobal = getStrDate(f);
             }
             else if (val === 'mes') {
-                const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-                const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-                dataInicioGlobal = getStrDate(inicioMes); dataFimGlobal = getStrDate(fimMes);
+                const i = new Date(hoje.getFullYear(), hoje.getMonth(), 1); const f = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+                dataInicioGlobal = getStrDate(i); dataFimGlobal = getStrDate(f);
             }
-            else if (val === 'custom') { boxDatas.classList.remove('hidden'); }
-            if (val !== 'custom') aplicarFiltroData();
+            else if (val === 'custom') { boxDatas.classList.remove('hidden'); return; }
+            aplicarFiltroData();
         }
 
         function aplicarFiltroData() {
             if (document.getElementById('filtro-periodo').value === 'custom') {
                 dataInicioGlobal = document.getElementById('filtro-inicio').value;
                 dataFimGlobal = document.getElementById('filtro-fim').value;
-                if(!dataInicioGlobal || !dataFimGlobal) return alert("Selecione ambas as datas!");
             }
             carregarDadosGlobais();
         }
-
-        function getQueryStringFiltro() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
-
+        function getQueryString() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
         function carregarDadosGlobais() { loadDashboard(); loadFinanceiro(); loadOS(); }
 
-        // LÓGICA DE LOGIN
+        // --- LOGIN ---
         async function realizarLogin(e) {
             e.preventDefault();
             try {
                 const res = await fetch(`${API_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario: username.value, senha: password.value }) });
                 if (res.ok) {
                     const user = await res.json();
+                    id_usuario_logado = user.id; perfil_logado = user.perfil;
                     document.getElementById('login-screen').classList.add('hidden');
                     
-                    if(user.perfil === 'Admin') {
+                    if(perfil_logado === 'Admin' || perfil_logado === 'Contador') {
                         document.getElementById('admin-screen').classList.remove('hidden');
                         document.getElementById('admin-name').innerText = user.nome;
-                        document.getElementById('admin-initial').innerText = user.nome.charAt(0);
+                        document.getElementById('admin-perfil-label').innerText = perfil_logado;
+                        
+                        if(perfil_logado === 'Contador') {
+                            document.getElementById('nav-os').classList.add('hidden');
+                            document.getElementById('nav-equipe').classList.add('hidden');
+                        }
                         carregarDadosGlobais(); loadEquipe(); carregarDropdownTecnicos(); navegar('dashboard');
                     } else {
                         document.getElementById('tech-screen').classList.remove('hidden');
                         document.getElementById('tech-name').innerText = user.nome;
-                        id_tecnico_logado = user.id; 
-                        
                         let hj = new Date(); let day = hj.getDay() || 7; hj.setDate(hj.getDate() - day + 1);
                         techCurrentWeekStart = hj;
-                        
-                        atualizarStatusPontoUI();
-                        loadTechWeekView();
+                        atualizarStatusPontoUI(); loadTechWeekView();
                     }
                 } else document.getElementById('login-error').classList.remove('hidden');
-            } catch (err) { alert("Erro crítico: Servidor Backend Offline!"); }
+            } catch (err) { alert("Servidor offline!"); }
         }
 
-        // LÓGICA DE PONTO (GPS) - ADMIN & TECH
+        // --- PONTO (GPS) ---
         async function atualizarStatusPontoUI() {
-            const res = await fetch(`${API_URL}/ponto/status/${id_tecnico_logado}`);
-            const data = await res.json();
-            const btn = document.getElementById('btn-ponto');
-            const txt = document.getElementById('txt-ponto-status');
-
+            const res = await fetch(`${API_URL}/ponto/status/${id_usuario_logado}`); const data = await res.json();
+            const btn = document.getElementById('btn-ponto'); const txt = document.getElementById('txt-ponto-status');
             if (data.ultimo_registro === 'Entrada') {
-                txt.innerText = "EM SERVIÇO"; txt.className = "text-emerald-400 font-black text-sm";
-                btn.innerText = "ENCERRAR DIA"; btn.className = "bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black text-xs transition active:scale-95 shadow-lg shadow-red-900/30";
+                txt.innerText = "EM SERVIÇO"; txt.className = "text-emerald-400 font-black";
+                btn.innerText = "ENCERRAR DIA"; btn.className = "bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black text-xs transition";
             } else {
-                txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black text-sm";
-                btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition active:scale-95 shadow-lg shadow-blue-900/30";
+                txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black";
+                btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition";
             }
         }
 
         function registrarPonto() {
-            const statusAtual = document.getElementById('txt-ponto-status').innerText;
-            const tipo = (statusAtual === "EM SERVIÇO") ? "Saída" : "Entrada";
-            
-            if (!confirm(`Deseja registar a sua ${tipo}?`)) return;
-
+            const tipo = (document.getElementById('txt-ponto-status').innerText === "EM SERVIÇO") ? "Saída" : "Entrada";
+            if (!confirm(`Registar ${tipo}?`)) return;
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     async (pos) => { await enviarPonto(tipo, pos.coords.latitude, pos.coords.longitude); }, 
-                    async (err) => { await enviarPonto(tipo, null, null); alert("Aviso: Ponto registado sem localização GPS. Por favor, ative a permissão de local."); },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    async () => { await enviarPonto(tipo, null, null); },
+                    { enableHighAccuracy: true, timeout: 5000 }
                 );
-            } else {
-                enviarPonto(tipo, null, null);
-            }
+            } else enviarPonto(tipo, null, null);
         }
 
         async function enviarPonto(tipo, lat, lng) {
-            await fetch(`${API_URL}/ponto`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id_tecnico: id_tecnico_logado, tipo: tipo, lat: lat, lng: lng }) });
-            alert(`Ponto de ${tipo} registado com sucesso!`);
-            atualizarStatusPontoUI();
+            await fetch(`${API_URL}/ponto`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id_tecnico: id_usuario_logado, tipo: tipo, lat: lat, lng: lng }) });
+            alert("Ponto registado!"); atualizarStatusPontoUI();
         }
 
         async function loadPontoAdmin() {
             const res = await fetch(`${API_URL}/ponto/admin`); const data = await res.json();
             document.getElementById('tb-ponto-admin').innerHTML = data.map(p => `
                 <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 font-medium text-white">${p.tecnico}</td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td>
-                    <td class="p-4 text-xs font-mono text-slate-400">${new Date(p.data_hora).toLocaleString('pt-BR')}</td>
-                    <td class="p-4 text-xs">
-                        ${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}" target="_blank" class="text-brand hover:text-blue-400 font-bold underline"><i class="fa-solid fa-location-dot mr-1"></i>Ver Mapa</a>` : '<span class="text-slate-600">Sem GPS</span>'}
-                    </td>
+                    <td class="p-4 text-white">${p.tecnico}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td>
+                    <td class="p-4 text-slate-400 text-xs">${new Date(p.data_hora).toLocaleString('pt-BR')}</td>
+                    <td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=$${p.latitude},${p.longitude}" target="_blank" class="text-brand underline text-xs">Ver Mapa</a>` : '-'}</td>
                 </tr>`).join('');
         }
 
-        // LÓGICA DO DASHBOARD ADMIN
+        // --- DASHBOARD ---
         async function loadDashboard() {
-            const res = await fetch(`${API_URL}/dashboard${getQueryStringFiltro()}`); 
-            const data = await res.json();
+            const res = await fetch(`${API_URL}/dashboard${getQueryString()}`); const data = await res.json();
             document.getElementById('dash-in').innerText = formatMoeda(data.faturamento_global);
             document.getElementById('dash-out').innerText = formatMoeda(data.despesas_globais);
             document.getElementById('dash-total').innerText = formatMoeda(data.faturamento_global - data.despesas_globais);
             document.getElementById('dash-os').innerText = data.total_os;
-            renderizarGraficos(data);
-        }
-
-        function renderizarGraficos(data) {
-            Chart.defaults.color = '#94a3b8'; Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
             
             const ctxOs = document.getElementById('chartOS').getContext('2d');
             if(chartOs) chartOs.destroy();
-            const osLabels = Object.keys(data.grafico_os); const osData = Object.values(data.grafico_os);
-            const osColors = osLabels.map(l => l==='Concluído'?'#10b981':l==='Pendente'?'#f59e0b':l==='Em Execução'?'#3b82f6':'#ef4444');
-            chartOs = new Chart(ctxOs, { type: 'doughnut', data: { labels: osLabels.length ? osLabels : ['Sem Dados'], datasets: [{ data: osData.length ? osData : [1], backgroundColor: osData.length ? osColors : ['#334155'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } } });
-
-            const ctxFin = document.getElementById('chartFinanceiro').getContext('2d');
-            if(chartFin) chartFin.destroy();
-            const datasEixoX = [...new Set([...Object.keys(data.grafico_fin_entradas||{}), ...Object.keys(data.grafico_fin_saidas||{})])].sort();
-            const dataEntradas = datasEixoX.map(d => data.grafico_fin_entradas[d] || 0); const dataSaidas = datasEixoX.map(d => data.grafico_fin_saidas[d] || 0);
-            const labelsEixoX = datasEixoX.map(d => { const p = d.split('-'); return `${p[2]}/${p[1]}`; });
-            chartFin = new Chart(ctxFin, { type: 'line', data: { labels: labelsEixoX.length ? labelsEixoX : ['-'], datasets: [ { label: 'Receitas', data: labelsEixoX.length ? dataEntradas : [0], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.4, fill: true }, { label: 'Despesas', data: labelsEixoX.length ? dataSaidas : [0], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 3, tension: 0.4, fill: true } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { x:{grid:{display:false}}, y:{grid:{color:'#334155'}} } } });
+            chartOs = new Chart(ctxOs, { type: 'doughnut', data: { labels: Object.keys(data.grafico_os), datasets: [{ data: Object.values(data.grafico_os), backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } } } });
         }
 
-        // CRUD FINANCEIRO
+        // --- FINANCEIRO (COM COMPROVANTES) ---
         async function loadFinanceiro() {
-            const res = await fetch(`${API_URL}/financeiro${getQueryStringFiltro()}`); arrayFinanceiro = await res.json();
+            const res = await fetch(`${API_URL}/financeiro${getQueryString()}`); arrayFinanceiro = await res.json();
             document.getElementById('tb-financeiro').innerHTML = arrayFinanceiro.map(f => `
                 <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 text-xs font-mono text-slate-500">${formatData(f.data_pagamento || f.data_registro)}</td>
-                    <td class="p-4 font-medium text-white flex flex-col">${f.descricao} <span class="text-[10px] text-slate-500 font-bold">${f.empresa.replace('MD ','')}</span></td>
+                    <td class="p-4 text-xs text-slate-500">${formatData(f.data_pagamento || f.data_registro)}</td>
+                    <td class="p-4 text-white"><p>${f.descricao}</p><p class="text-[10px] text-slate-500">${f.empresa} ${f.id_os ? '| OS #'+f.id_os : ''}</p></td>
                     <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">R$ ${f.valor.toFixed(2)}</td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${f.status_pagamento==='Pago'?'bg-emerald-500/10 text-emerald-500':'bg-orange-500/10 text-orange-500'}">${f.status_pagamento}</span></td>
-                    <td class="p-4 text-center"><button onclick="editarFin(${f.id})" class="text-slate-500 hover:text-brand transition mr-4"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deletarItem('financeiro', ${f.id})" class="text-slate-500 hover:text-red-400 transition"><i class="fa-solid fa-trash-can"></i></button></td>
+                    <td class="p-4 text-xs text-slate-400">${f.status_pagamento} / NF: ${f.status_nf}</td>
+                    <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-500'}"></i></td>
+                    <td class="p-4 text-center"><button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
                 </tr>`).join('');
         }
 
         function abrirNovaFin() { 
-            document.getElementById('modal-fin-title').innerHTML = "<i class='fa-solid fa-money-bill-transfer mr-2 text-brand'></i>Novo Lançamento"; 
-            document.getElementById('fin-id').value=""; document.getElementById('fin-desc').value=""; document.getElementById('fin-valor').value=""; document.getElementById('fin-data-emissao').value=""; document.getElementById('fin-data-pagamento').value=""; 
+            document.getElementById('fin-id').value=""; document.getElementById('fin-desc').value=""; document.getElementById('fin-valor').value=""; document.getElementById('fin-id-os').value=""; document.getElementById('fin-conciliado').value="Não"; document.getElementById('fin-arquivos-list').innerHTML="";
             abrirModal('modal-fin'); 
         }
 
-        function editarFin(id) { 
+        async function editarFin(id) { 
             const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
-            document.getElementById('modal-fin-title').innerHTML = "<i class='fa-solid fa-pen mr-2 text-brand'></i>Editar Transação"; 
-            document.getElementById('fin-id').value=f.id; document.getElementById('fin-empresa').value=f.empresa; document.getElementById('fin-desc').value=f.descricao; document.getElementById('fin-valor').value=f.valor; document.getElementById('fin-tipo').value=f.tipo; document.getElementById('fin-status-pgto').value=f.status_pagamento; document.getElementById('fin-status-nf').value=f.status_nf; document.getElementById('fin-categoria').value=f.categoria; document.getElementById('fin-data-emissao').value=f.data_emissao||""; document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; 
+            document.getElementById('fin-id').value=f.id; document.getElementById('fin-empresa').value=f.empresa; document.getElementById('fin-desc').value=f.descricao; document.getElementById('fin-valor').value=f.valor; document.getElementById('fin-tipo').value=f.tipo; document.getElementById('fin-categoria').value=f.categoria; document.getElementById('fin-status-pgto').value=f.status_pagamento; document.getElementById('fin-status-nf').value=f.status_nf; document.getElementById('fin-data-emissao').value=f.data_emissao||""; document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; document.getElementById('fin-id-os').value=f.id_os||""; document.getElementById('fin-conciliado').value=f.conciliado||"Não";
+            
+            // Carregar Comprovantes Existentes
+            const rArq = await fetch(`${API_URL}/arquivos/comprovantes/${id}`); const dArq = await rArq.json();
+            document.getElementById('fin-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/comprovantes/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-paperclip mr-1"></i>${a}</a>`).join('');
             abrirModal('modal-fin'); 
         }
 
         async function salvarFinanceiro(e) {
             e.preventDefault(); const id = document.getElementById('fin-id').value;
-            const payload = { empresa: document.getElementById('fin-empresa').value, descricao: document.getElementById('fin-desc').value, valor: parseFloat(document.getElementById('fin-valor').value), tipo: document.getElementById('fin-tipo').value, categoria: document.getElementById('fin-categoria').value, status_pagamento: document.getElementById('fin-status-pgto').value, status_nf: document.getElementById('fin-status-nf').value, data_emissao: document.getElementById('fin-data-emissao').value || null, data_pagamento: document.getElementById('fin-data-pagamento').value || null };
-            await fetch(id ? `${API_URL}/financeiro/${id}` : `${API_URL}/financeiro`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-            fecharModal('modal-fin'); carregarDadosGlobais();
+            const payload = { empresa: document.getElementById('fin-empresa').value, descricao: document.getElementById('fin-desc').value, valor: parseFloat(document.getElementById('fin-valor').value), tipo: document.getElementById('fin-tipo').value, categoria: document.getElementById('fin-categoria').value, status_pagamento: document.getElementById('fin-status-pgto').value, status_nf: document.getElementById('fin-status-nf').value, data_emissao: document.getElementById('fin-data-emissao').value || null, data_pagamento: document.getElementById('fin-data-pagamento').value || null, id_os: document.getElementById('fin-id-os').value ? parseInt(document.getElementById('fin-id-os').value) : null, conciliado: document.getElementById('fin-conciliado').value };
+            
+            const res = await fetch(id ? `${API_URL}/financeiro/${id}` : `${API_URL}/financeiro`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            const savedData = await res.json();
+            
+            // Upload File
+            const fileInput = document.getElementById('fin-docs');
+            if(fileInput.files.length > 0) {
+                const formData = new FormData(); for(let i=0; i<fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]);
+                await fetch(`${API_URL}/upload/comprovantes/${id ? id : savedData.id}`, { method: 'POST', body: formData });
+            }
+            fecharModal('modal-fin'); loadFinanceiro();
         }
 
-        // CRUD OS
+        // --- OS ---
         async function loadOS() {
-            const res = await fetch(`${API_URL}/os${getQueryStringFiltro()}`); arrayOS = await res.json();
+            const res = await fetch(`${API_URL}/os`); arrayOS = await res.json();
             document.getElementById('tb-os').innerHTML = arrayOS.map(o => `
-                <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 text-xs font-mono text-slate-500">${formatData(o.data_programada)}</td>
-                    <td class="p-4 font-black text-brand text-xs">${o.numero_os||o.id}</td>
-                    <td class="p-4 text-white font-medium flex flex-col truncate max-w-[200px]">
-                        ${o.cliente} <span class="text-[10px] text-slate-500 font-bold">${o.endereco ? o.endereco + ' | ' : ''}${o.empresa.replace('MD ','')}</span>
-                    </td>
-                    <td class="p-4 text-slate-400 text-xs">${o.tecnico}</td>
-                    <td class="p-4"><span class="text-[10px] font-black uppercase tracking-widest text-brand">${o.status}</span></td>
-                    <td class="p-4 text-center"><button onclick="editarOS(${o.id})" class="text-slate-500 hover:text-brand transition mr-4"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deletarItem('os', ${o.id})" class="text-slate-500 hover:text-red-400 transition"><i class="fa-solid fa-trash-can"></i></button></td>
+                <tr class="border-b border-slate-700/50">
+                    <td class="p-4 text-xs">${formatData(o.data_programada)}</td>
+                    <td class="p-4 text-brand font-bold">${o.numero_os}</td>
+                    <td class="p-4 text-white">${o.cliente}</td>
+                    <td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
+                    <td class="p-4"><span class="text-[10px] uppercase font-bold text-brand">${o.status}</span></td>
+                    <td class="p-4 text-center"><button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
                 </tr>`).join('');
         }
 
-        function abrirNovaOS() { 
-            document.getElementById('modal-os-title').innerHTML = "<i class='fa-solid fa-bolt mr-2 text-brand'></i>Emitir Nova OS"; 
-            document.getElementById('os-id').value=""; document.getElementById('os-numero').value=""; document.getElementById('os-cliente').value=""; document.getElementById('os-endereco').value=""; document.getElementById('os-plataforma').value=""; document.getElementById('os-desc').value=""; document.getElementById('os-relatorio').value=""; document.getElementById('os-data').value=getStrDate(new Date()); document.getElementById('os-docs').value=""; document.getElementById('os-status').value="Pendente"; 
-            abrirModal('modal-os'); 
-        }
-
-        function editarOS(id) { 
+        function abrirNovaOS() { document.getElementById('os-id').value=""; document.getElementById('os-numero').value=""; document.getElementById('os-cliente').value=""; document.getElementById('os-endereco').value=""; document.getElementById('os-plataforma').value=""; document.getElementById('os-desc').value=""; document.getElementById('os-arquivos-list').innerHTML=""; abrirModal('modal-os'); }
+        
+        async function editarOS(id) {
             const o = arrayOS.find(x => x.id == id); if(!o) return;
-            document.getElementById('modal-os-title').innerHTML = `<i class='fa-solid fa-pen mr-2 text-brand'></i>Editar OS #${o.numero_os}`; 
-            document.getElementById('os-id').value=o.id; document.getElementById('os-empresa').value=o.empresa; document.getElementById('os-numero').value=o.numero_os; document.getElementById('os-cliente').value=o.cliente; document.getElementById('os-endereco').value=o.endereco; document.getElementById('os-plataforma').value=o.plataforma; document.getElementById('os-desc').value=o.servico_descricao; document.getElementById('os-relatorio').value=o.relatorio_tecnico||""; document.getElementById('os-tecnico').value=o.id_tecnico; document.getElementById('os-status').value=o.status; if(o.data_programada) { document.getElementById('os-data').value = o.data_programada; } 
-            abrirModal('modal-os'); 
+            document.getElementById('os-id').value=o.id; document.getElementById('os-empresa').value=o.empresa; document.getElementById('os-numero').value=o.numero_os; document.getElementById('os-cliente').value=o.cliente; document.getElementById('os-endereco').value=o.endereco; document.getElementById('os-plataforma').value=o.plataforma; document.getElementById('os-desc').value=o.servico_descricao; document.getElementById('os-tecnico').value=o.id_tecnico; document.getElementById('os-status').value=o.status; if(o.data_programada) document.getElementById('os-data').value = o.data_programada;
+            const rArq = await fetch(`${API_URL}/arquivos/documentos/${id}`); const dArq = await rArq.json();
+            document.getElementById('os-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/documentos/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-file text-red-500 mr-1"></i>${a}</a>`).join('');
+            abrirModal('modal-os');
         }
 
         async function salvarOS(e) {
             e.preventDefault(); const id = document.getElementById('os-id').value;
-            const payload = { empresa: document.getElementById('os-empresa').value, numero_os: document.getElementById('os-numero').value, cliente: document.getElementById('os-cliente').value, endereco: document.getElementById('os-endereco').value, plataforma: document.getElementById('os-plataforma').value, servico_descricao: document.getElementById('os-desc').value, relatorio_tecnico: document.getElementById('os-relatorio').value, id_tecnico: parseInt(document.getElementById('os-tecnico').value), data_programada: document.getElementById('os-data').value, status: document.getElementById('os-status').value || 'Pendente' };
-            const res = await fetch(id ? `${API_URL}/os/${id}` : `${API_URL}/os`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-            const data = await res.json();
+            const payload = { empresa: document.getElementById('os-empresa').value, numero_os: document.getElementById('os-numero').value, cliente: document.getElementById('os-cliente').value, endereco: document.getElementById('os-endereco').value, plataforma: document.getElementById('os-plataforma').value, servico_descricao: document.getElementById('os-desc').value, id_tecnico: parseInt(document.getElementById('os-tecnico').value), data_programada: document.getElementById('os-data').value, status: document.getElementById('os-status').value };
+            const res = await fetch(id ? `${API_URL}/os/${id}` : `${API_URL}/os`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }); const data = await res.json();
             const fileInput = document.getElementById('os-docs');
-            if (fileInput.files.length > 0) { const formData = new FormData(); for (let i = 0; i < fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/os/${id ? id : data.id}/documentos`, { method: 'POST', body: formData }); }
-            fecharModal('modal-os'); carregarDadosGlobais();
+            if(fileInput.files.length > 0) { const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/upload/documentos/${id ? id : data.id}`, { method: 'POST', body: fData }); }
+            fecharModal('modal-os'); loadOS();
         }
 
-        // CRUD USUÁRIOS
+        // --- USUÁRIOS ---
         async function loadEquipe() {
             const res = await fetch(`${API_URL}/usuarios`); arrayUsuarios = await res.json();
             document.getElementById('tb-equipe').innerHTML = arrayUsuarios.map(u => `
-                <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 font-medium text-white">${u.nome}</td><td class="p-4 text-slate-400 font-mono text-xs">${u.usuario}</td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.perfil==='Admin'?'bg-blue-500/10 text-blue-500':'bg-emerald-500/10 text-emerald-500'}">${u.perfil}</span></td>
-                    <td class="p-4 text-center"><button onclick="editarUser(${u.id})" class="text-slate-500 hover:text-brand transition mr-4"><i class="fa-solid fa-user-pen"></i></button><button onclick="deletarItem('usuarios', ${u.id})" class="text-slate-500 hover:text-red-400 transition"><i class="fa-solid fa-user-minus"></i></button></td>
+                <tr class="border-b border-slate-700/50">
+                    <td class="p-4 text-white">${u.nome}</td><td class="p-4 text-slate-400">${u.usuario}</td>
+                    <td class="p-4 text-[10px] uppercase font-bold text-brand">${u.perfil}</td>
+                    <td class="p-4 text-center"><button onclick="editarUser(${u.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
                 </tr>`).join('');
         }
+        function abrirNovoUser() { document.getElementById('usr-id').value=""; document.getElementById('usr-nome').value=""; document.getElementById('usr-email').value=""; document.getElementById('usr-login').value=""; document.getElementById('usr-senha').value=""; document.getElementById('senha-hint').classList.add('hidden'); document.getElementById('login-field-container').classList.remove('hidden'); abrirModal('modal-user'); }
+        function editarUser(id) { const u = arrayUsuarios.find(x=>x.id==id); document.getElementById('usr-id').value=u.id; document.getElementById('usr-nome').value=u.nome; document.getElementById('usr-email').value=u.email; document.getElementById('usr-login').value=u.usuario; document.getElementById('usr-perfil').value=u.perfil; document.getElementById('usr-senha').value=""; document.getElementById('senha-hint').classList.remove('hidden'); document.getElementById('login-field-container').classList.add('hidden'); abrirModal('modal-user'); }
+        async function salvarUsuario(e) { e.preventDefault(); const id = document.getElementById('usr-id').value; const p = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value }; try { const res = await fetch(id ? `${API_URL}/usuarios/${id}` : `${API_URL}/usuarios`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); if(!res.ok) { const err = await res.json(); alert(`ERRO: ${err.detail}`); return; } fecharModal('modal-user'); loadEquipe(); } catch(err) { alert("Erro de comunicação."); } }
+        async function carregarDropdownTecnicos() { const res = await fetch(`${API_URL}/tecnicos`); const data = await res.json(); document.getElementById('os-tecnico').innerHTML = data.map(t => `<option value="${t.id}">${t.nome}</option>`).join(''); }
 
-        async function carregarDropdownTecnicos() {
-            const res = await fetch(`${API_URL}/tecnicos`); const data = await res.json();
-            document.getElementById('os-tecnico').innerHTML = data.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
-        }
-
-        function abrirNovoUser() { 
-            document.getElementById('modal-user-title').innerHTML = "<i class='fa-solid fa-user-plus mr-2 text-brand'></i>Cadastrar Membro"; 
-            document.getElementById('usr-id').value=""; document.getElementById('usr-nome').value=""; document.getElementById('usr-email').value=""; document.getElementById('usr-login').value=""; document.getElementById('login-field-container').classList.remove('hidden'); document.getElementById('usr-senha').value=""; document.getElementById('usr-senha').required=true; document.getElementById('senha-hint').classList.add('hidden'); 
-            abrirModal('modal-user'); 
-        }
-
-        function editarUser(id) { 
-            const u = arrayUsuarios.find(x => x.id == id); if(!u) return;
-            document.getElementById('modal-user-title').innerHTML = `<i class='fa-solid fa-pen mr-2 text-brand'></i>Perfil de ${u.nome.split(' ')[0]}`; 
-            document.getElementById('usr-id').value=u.id; document.getElementById('usr-nome').value=u.nome; document.getElementById('usr-email').value=u.email; document.getElementById('login-field-container').classList.add('hidden'); document.getElementById('usr-login').value=u.usuario; document.getElementById('usr-perfil').value=u.perfil; document.getElementById('usr-senha').value=""; document.getElementById('usr-senha').required=false; document.getElementById('senha-hint').classList.remove('hidden'); 
-            abrirModal('modal-user'); 
-        }
-
-        async function salvarUsuario(e) {
-    e.preventDefault(); const id = document.getElementById('usr-id').value;
-    const payload = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value };
-    try { 
-        const res = await fetch(id ? `${API_URL}/usuarios/${id}` : `${API_URL}/usuarios`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }); 
-        if(!res.ok) {
-            const err = await res.json();
-            alert(`ERRO DO BANCO DE DADOS: ${err.detail}`);
-            return;
-        }
-        fecharModal('modal-user'); loadEquipe(); 
-    } catch(err) { alert("Erro de comunicação com o servidor."); }
-}
-
-        // GLOBAL DELETE
-        async function deletarItem(rota, id) { 
-            if(confirm("Deseja excluir este registro permanentemente?")) { 
-                await fetch(`${API_URL}/${rota}/${id}`, { method: 'DELETE' }); 
-                if(rota === 'usuarios') loadEquipe(); else carregarDadosGlobais(); 
-            } 
-        }
-
-        // --- LÓGICA DO PORTAL DO TÉCNICO (AGENDA & OS) ---
-        function navegarSemanaTech(direcao) {
-            techCurrentWeekStart.setDate(techCurrentWeekStart.getDate() + (direcao * 7));
-            loadTechWeekView();
-        }
-
-        function toggleOSCard(id) {
-            const details = document.getElementById(`details-os-${id}`);
-            const icon = document.getElementById(`icon-os-${id}`);
-            details.classList.toggle('hidden');
-            icon.classList.toggle('rotate-180');
-        }
-
+        // --- PORTAL TÉCNICO ---
+        function navegarSemanaTech(dir) { techCurrentWeekStart.setDate(techCurrentWeekStart.getDate() + (dir * 7)); loadTechWeekView(); }
         async function loadTechWeekView() {
-            let inicioStr = getStrDate(techCurrentWeekStart);
-            let endWeek = new Date(techCurrentWeekStart); endWeek.setDate(techCurrentWeekStart.getDate() + 6);
-            let fimStr = getStrDate(endWeek);
-
-            document.getElementById('tech-week-label').innerText = `${techCurrentWeekStart.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} a ${endWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}`;
-
-            const res = await fetch(`${API_URL}/minhas-os/${id_tecnico_logado}?inicio=${inicioStr}&fim=${fimStr}`); 
-            const data = await res.json();
-            
-            const diasSemanaNomes = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
-            let calHtml = ''; let dataHojeReal = getStrDate(new Date());
-
-            for(let i=0; i<7; i++) {
-                let d = new Date(techCurrentWeekStart); d.setDate(techCurrentWeekStart.getDate() + i);
-                let dateStr = getStrDate(d);
-                let isToday = dateStr === dataHojeReal;
-                let hasOS = data.some(os => os.data_programada === dateStr);
-                
-                let corFundo = isToday ? 'bg-brand text-white shadow-lg shadow-brand/50' : 'bg-transparent text-slate-500 hover:text-slate-300';
-                let dotHtml = hasOS ? `<div class="w-1.5 h-1.5 bg-brand rounded-full mt-1"></div>` : `<div class="w-1.5 h-1.5 mt-1"></div>`;
-
-                calHtml += `<div class="flex flex-col items-center"><span class="text-[10px] font-bold ${isToday ? 'text-brand' : 'text-slate-600'} mb-1">${diasSemanaNomes[i]}</span><div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${corFundo}">${d.getDate()}</div>${dotHtml}</div>`;
-            }
+            let iStr = getStrDate(techCurrentWeekStart); let eW = new Date(techCurrentWeekStart); eW.setDate(eW.getDate() + 6); let fStr = getStrDate(eW);
+            document.getElementById('tech-week-label').innerText = `${techCurrentWeekStart.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} a ${eW.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}`;
+            const res = await fetch(`${API_URL}/minhas-os/${id_usuario_logado}?inicio=${iStr}&fim=${fStr}`); const data = await res.json();
+            const dias = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM']; let calHtml = ''; let hjReal = getStrDate(new Date());
+            for(let i=0; i<7; i++) { let d = new Date(techCurrentWeekStart); d.setDate(d.getDate() + i); let dtStr = getStrDate(d); let isHj = dtStr === hjReal; let hasOS = data.some(o => o.data_programada === dtStr); calHtml += `<div class="flex flex-col items-center"><span class="text-[10px] font-bold ${isHj?'text-brand':'text-slate-600'} mb-1">${dias[i]}</span><div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${isHj?'bg-brand text-white':'text-slate-500'}">${d.getDate()}</div><div class="w-1.5 h-1.5 mt-1 rounded-full ${hasOS?'bg-brand':''}"></div></div>`; }
             document.getElementById('tech-calendar-days').innerHTML = calHtml;
-
-            const list = document.getElementById('tech-task-list');
-            if(data.length === 0) { list.innerHTML = '<div class="p-10 mt-10 text-center text-slate-600 font-bold uppercase tracking-widest border-2 border-dashed border-slate-800 rounded-2xl">Semana livre</div>'; return; }
-
-            let agrupado = {};
-            data.forEach(o => { if(!agrupado[o.data_programada]) agrupado[o.data_programada] = []; agrupado[o.data_programada].push(o); });
-
-            let htmlCards = '';
-            for(let diaOS of Object.keys(agrupado).sort()) {
-                let dataLabel = (diaOS === dataHojeReal) ? "HOJE" : formatData(diaOS);
-                htmlCards += `<h3 class="text-xs font-black text-brand uppercase tracking-widest mt-6 mb-2 border-l-2 border-brand pl-2">${dataLabel}</h3>`;
-
-                for(let o of agrupado[diaOS]) {
-                    const resArq = await fetch(`${API_URL}/os/${o.id}/arquivos`); const arqData = await resArq.json();
-                    let docsHtml = '';
-                    if (arqData.documentos.length > 0) {
-                        docsHtml = '<div class="bg-slate-900/50 p-4 rounded-xl space-y-2 mt-4">';
-                        for (let d of arqData.documentos) docsHtml += `<a href="${API_URL}/download/documentos/${o.id}/${d}" target="_blank" class="block bg-slate-800 p-3 rounded-lg text-xs flex items-center border border-slate-700 active:bg-slate-700 text-slate-300"><i class="fa-solid fa-file-pdf text-red-500 mr-3 text-lg"></i>${d}</a>`;
-                        docsHtml += '</div>';
-                    }
-
-                    htmlCards += `
-                    <div class="bg-cardbg border border-slate-800 rounded-2xl mb-4 shadow-2xl overflow-hidden transition-all duration-300">
-                        <div class="p-5 cursor-pointer hover:bg-slate-800/50 transition flex justify-between items-center" onclick="toggleOSCard(${o.id})">
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center gap-2"><span class="text-[10px] font-black bg-slate-800 px-3 py-1 rounded-full text-white uppercase border border-slate-700">OS #${o.numero_os || o.id}</span><span class="text-[10px] font-black text-brand uppercase tracking-widest">${o.status}</span></div>
-                                <h4 class="text-white font-bold text-base truncate max-w-[200px]">${o.cliente}</h4>
-                            </div>
-                            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700 shrink-0"><i class="fa-solid fa-chevron-down transition-transform duration-300" id="icon-os-${o.id}"></i></div>
-                        </div>
-                        <div id="details-os-${o.id}" class="hidden border-t border-slate-800 p-5 bg-slate-900/30">
-                            ${o.endereco ? `<p class="text-xs text-brand font-bold mb-3"><i class="fa-solid fa-location-dot mr-1"></i> ${o.endereco}</p>` : ''}
-                            <p class="text-xs text-slate-400 mb-4 leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800/50">${o.servico_descricao}</p>
-                            ${docsHtml}
-                            <div class="my-6 border-t border-slate-800 pt-6">
-                                <p class="text-[10px] font-bold text-slate-500 uppercase mb-2">Relatório de Execução</p>
-                                <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded-xl p-3 border border-slate-700 focus:border-brand focus:outline-none text-xs h-24 mb-4" placeholder="Descreva o que foi feito no local...">${o.relatorio_tecnico || ''}</textarea>
-                                <div class="flex gap-2">
-                                    <select id="status-${o.id}" class="w-1/3 bg-slate-800 text-white rounded-xl p-3 border border-slate-700 appearance-none focus:outline-none focus:border-brand text-xs font-bold">
-                                        <option ${o.status==='Pendente'?'selected':''}>Pendente</option><option ${o.status==='Em Execução'?'selected':''}>Em Execução</option><option ${o.status==='Concluído'?'selected':''}>Concluído</option>
-                                    </select>
-                                    <button onclick="atualizarStatusOS(${o.id})" class="w-2/3 bg-brand hover:bg-blue-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition text-xs tracking-wider">SALVAR REGISTRO</button>
-                                </div>
-                            </div>
-                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-                                <p class="text-[10px] font-bold text-slate-500 uppercase mb-3"><i class="fa-solid fa-camera mr-2"></i>Evidências (Fotos)</p>
-                                <input type="file" id="evidencias-${o.id}" multiple accept="image/*" class="w-full text-xs text-slate-500 mb-3 file:bg-slate-800 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-lg hover:file:bg-slate-700 cursor-pointer">
-                                <button onclick="enviarEvidencias(${o.id})" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg active:bg-emerald-500 transition text-xs">ENVIAR PARA BASE</button>
-                            </div>
+            const list = document.getElementById('tech-task-list'); if(data.length === 0) { list.innerHTML = '<div class="text-center text-slate-600 font-bold p-10 uppercase">Sem tarefas</div>'; return; }
+            let agrupado = {}; data.forEach(o => { if(!agrupado[o.data_programada]) agrupado[o.data_programada] = []; agrupado[o.data_programada].push(o); });
+            let hC = '';
+            for(let d of Object.keys(agrupado).sort()) {
+                hC += `<h3 class="text-xs font-black text-brand uppercase mt-6 mb-2">${d === hjReal ? "HOJE" : formatData(d)}</h3>`;
+                for(let o of agrupado[d]) {
+                    hC += `
+                    <div class="bg-cardbg border border-slate-800 rounded-xl mb-4 p-4 shadow-xl">
+                        <div class="flex justify-between items-start mb-4"><div><span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-white border border-slate-700">OS #${o.numero_os}</span><h4 class="text-white font-bold mt-2">${o.cliente}</h4><p class="text-xs text-brand mt-1">${o.endereco}</p></div></div>
+                        <p class="text-xs text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800">${o.servico_descricao}</p>
+                        <div class="mt-4 border-t border-slate-800 pt-4">
+                            <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded p-3 text-xs mb-2" placeholder="Relatório...">${o.relatorio_tecnico || ''}</textarea>
+                            <div class="flex gap-2 mb-4"><select id="status-${o.id}" class="w-1/2 bg-slate-800 text-white rounded p-3 text-xs"><option ${o.status==='Pendente'?'selected':''}>Pendente</option><option ${o.status==='Em Execução'?'selected':''}>Em Execução</option><option ${o.status==='Concluído'?'selected':''}>Concluído</option></select><button onclick="atualizarStatusOS(${o.id})" class="w-1/2 bg-brand text-white font-bold py-3 rounded text-xs">SALVAR</button></div>
+                            <input type="file" id="evidencias-${o.id}" multiple class="w-full text-[10px] text-slate-500 mb-2"><button onclick="enviarEvidencias(${o.id})" class="w-full bg-emerald-600 text-white font-bold py-2 rounded text-xs">ENVIAR FOTOS</button>
                         </div>
                     </div>`;
                 }
             }
-            list.innerHTML = htmlCards;
+            list.innerHTML = hC;
         }
-
-        async function atualizarStatusOS(id) { 
-            await fetch(`${API_URL}/os/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: document.getElementById(`status-${id}`).value, relatorio_tecnico: document.getElementById(`relatorio-${id}`).value }) }); 
-            alert("Registro salvo com sucesso!"); loadTechWeekView(); 
-        }
-
-        async function enviarEvidencias(id) { 
-            const fileInput = document.getElementById(`evidencias-${id}`); if(fileInput.files.length === 0) return alert("Selecione fotos primeiro!"); 
-            const formData = new FormData(); for(let i=0; i<fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]);
-            await fetch(`${API_URL}/os/${id}/evidencias`, { method: 'POST', body: formData }); alert("Fotos enviadas!"); fileInput.value = ""; 
-        }
+        async function atualizarStatusOS(id) { await fetch(`${API_URL}/os/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: document.getElementById(`status-${id}`).value, relatorio_tecnico: document.getElementById(`relatorio-${id}`).value }) }); alert("Salvo!"); loadTechWeekView(); }
+        async function enviarEvidencias(id) { const fileInput = document.getElementById(`evidencias-${id}`); if(fileInput.files.length === 0) return alert("Selecione fotos!"); const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/upload/evidencias/${id}`, { method: 'POST', body: fData }); alert("Fotos enviadas!"); fileInput.value = ""; }
     </script>
 </body>
 </html>

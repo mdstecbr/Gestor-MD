@@ -1,6 +1,9 @@
 import os
 import requests
 import msal
+import os
+def is_configured(): return os.environ.get("MS_CLIENT_ID") is not None
+def upload_arquivo(content, name, path): pass # Lógica de upload aqui
 
 TENANT_ID = os.environ.get("MS_TENANT_ID")
 CLIENT_ID = os.environ.get("MS_CLIENT_ID")
