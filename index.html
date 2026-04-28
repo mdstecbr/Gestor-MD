@@ -232,12 +232,18 @@
 
             <div id="page-financeiro" class="page-view hidden flex-1">
                 <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
-                    <div><h2 class="text-2xl font-bold text-white">Financeiro Contábil</h2></div>
-                    <div class="flex flex-col md:flex-row gap-2">
-                        <button onclick="exportarFechamento()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-file-pdf mr-2"></i>Exportar PDF</button>
-                        <button onclick="abrirNovaFin()" class="bg-brand hover:bg-blue-500 text-white px-4 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i>Novo Lançamento</button>
-                    </div>
-                </div>
+    <div><h2 class="text-2xl font-bold text-white">Ordens de Serviço</h2></div>
+    <div class="flex flex-col md:flex-row gap-2">
+        <select id="filtro-status-os" onchange="loadOS()" class="bg-slate-800 border border-slate-600 rounded-lg p-3 text-sm text-white font-bold outline-none focus:border-brand transition">
+            <option value="">Todos os Status</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Em Execução">Em Execução</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Cancelada">Cancelada</option>
+        </select>
+        <button onclick="abrirNovaOS()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-bolt mr-2"></i>Emitir OS</button>
+    </div>
+</div>
                 <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
                     <table class="w-full text-sm text-left min-w-[800px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data</th><th class="p-4">Descrição</th><th class="p-4">Valor</th><th class="p-4">Status / NF</th><th class="p-4 text-center">Conciliado</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-financeiro" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
@@ -437,13 +443,49 @@ async function loadDashboard() {
     // Gráfico de Rosca (OS)
     const ctxOs = document.getElementById('chartOS').getContext('2d');
     if(chartOs) chartOs.destroy();
+    
+    const chavesOS = Object.keys(data.grafico_os);
+    const valoresOS = Object.values(data.grafico_os);
+    
+    // 1. Legenda com as contagens dinâmicas
+    const labelsOS = chavesOS.map((chave, i) => `${chave} (${valoresOS[i]})`);
+    
+    // 2. Cores fixas para manter a consistência visual
+    const coresMapa = { 'Pendente': '#f59e0b', 'Em Execução': '#3b82f6', 'Concluído': '#10b981', 'Cancelada': '#ef4444' };
+    const coresOS = chavesOS.map(chave => coresMapa[chave] || '#94a3b8');
+
     chartOs = new Chart(ctxOs, { 
         type: 'doughnut', 
         data: { 
-            labels: Object.keys(data.grafico_os), 
-            datasets: [{ data: Object.values(data.grafico_os), backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0 }] 
+            labels: labelsOS, 
+            datasets: [{ data: valoresOS, backgroundColor: coresOS, borderWidth: 0, hoverOffset: 6 }] 
         }, 
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } } } 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { 
+                    position: 'right', // Joga a legenda pra direita pra ler os números melhor
+                    labels: { color: '#94a3b8', font: { size: 12, weight: 'bold' }, padding: 20 } 
+                } 
+            },
+            // Muda o cursor para "mãozinha" ao passar por cima
+            onHover: (event, chartElement) => {
+                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+            },
+            // A mágica do Clique
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const statusClicado = chavesOS[index]; // Pega o nome do status (ex: Pendente)
+                    
+                    // Viaja para a tela de OS, muda o select e carrega a tabela
+                    document.getElementById('filtro-status-os').value = statusClicado;
+                    navegar('os');
+                    loadOS();
+                }
+            }
+        } 
     });
 
     // Novo Gráfico de Linhas (Financeiro)
@@ -541,17 +583,28 @@ async function loadDashboard() {
 
         // --- OS ---
         async function loadOS() {
-            const res = await fetch(`${API_URL}/os`); arrayOS = await res.json();
-            document.getElementById('tb-os').innerHTML = arrayOS.map(o => `
-                <tr class="border-b border-slate-700/50">
-                    <td class="p-4 text-xs">${formatData(o.data_programada)}</td>
-                    <td class="p-4 text-brand font-bold">${o.numero_os}</td>
-                    <td class="p-4 text-white">${o.cliente}</td>
-                    <td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
-                    <td class="p-4"><span class="text-[10px] uppercase font-bold text-brand">${o.status}</span></td>
-                    <td class="p-4 text-center"><button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
-                </tr>`).join('');
-        }
+    const res = await fetch(`${API_URL}/os`); 
+    arrayOS = await res.json();
+    
+    // Captura o valor do novo filtro
+    const filtro = document.getElementById('filtro-status-os') ? document.getElementById('filtro-status-os').value : "";
+    
+    // Filtra a lista se algum status estiver selecionado
+    let dadosFiltrados = arrayOS;
+    if (filtro !== "") {
+        dadosFiltrados = arrayOS.filter(o => o.status === filtro);
+    }
+
+    document.getElementById('tb-os').innerHTML = dadosFiltrados.map(o => `
+        <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
+            <td class="p-4 text-xs">${formatData(o.data_programada)}</td>
+            <td class="p-4 text-brand font-bold">${o.numero_os}</td>
+            <td class="p-4 text-white">${o.cliente}</td>
+            <td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
+            <td class="p-4"><span class="text-[10px] uppercase font-bold text-brand">${o.status}</span></td>
+            <td class="p-4 text-center"><button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
+        </tr>`).join('');
+}
 
         function abrirNovaOS() { document.getElementById('os-id').value=""; document.getElementById('os-numero').value=""; document.getElementById('os-cliente').value=""; document.getElementById('os-endereco').value=""; document.getElementById('os-plataforma').value=""; document.getElementById('os-desc').value=""; document.getElementById('os-arquivos-list').innerHTML=""; abrirModal('modal-os'); }
         
