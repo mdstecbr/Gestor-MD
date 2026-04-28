@@ -7,10 +7,10 @@
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="./static/logo.png">
+    <link rel="apple-touch-icon" href="/static/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" href="./static/logo.png">
+    <link rel="icon" type="image/png" href="/static/logo.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -140,7 +140,9 @@
 
     <div id="login-screen" class="w-full flex items-center justify-center bg-darkbg absolute inset-0 z-50">
         <div class="bg-cardbg p-8 md:p-10 rounded-xl border border-slate-700 shadow-2xl w-[90%] md:w-[400px] text-center">
-            <div class="w-20 h-20 flex items-center justify-center mx-auto mb-6"><img src="./static/logo.png" alt="Logo MD" class="h-16 w-auto" onerror="this.onerror=null; this.src='logo.png';"></div>
+            <div class="w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                <img src="/static/logo.png" alt="Logo MD" class="h-full w-auto object-contain" onerror="this.onerror=null; this.src='/logo.png';">
+            </div>
             <h1 class="text-2xl font-bold text-white mb-2">MD Soluções</h1>
             <p class="text-slate-500 text-sm mb-8 font-medium tracking-wide">GESTOR EMPRESARIAL</p>
             <form onsubmit="realizarLogin(event)">
@@ -154,13 +156,20 @@
 
     <div id="admin-screen" class="hidden w-full flex flex-col md:flex-row h-full relative">
         <div class="md:hidden w-full bg-sidebarbg border-b border-slate-800 p-4 flex justify-between items-center z-30">
-            <div class="flex items-center gap-3"><span class="text-lg font-black text-white italic">GESTOR.MD</span></div>
+            <div class="flex items-center gap-3">
+                <img src="/static/logo.png" alt="Logo MD" class="h-8 w-auto" onerror="this.style.display='none'">
+                <span class="text-lg font-black text-white italic">GESTOR.MD</span>
+            </div>
             <button onclick="toggleMenu()" class="text-white text-2xl focus:outline-none"><i class="fa-solid fa-bars"></i></button>
         </div>
 
         <aside id="sidebar-admin" class="w-64 bg-sidebarbg border-r border-slate-800 flex flex-col absolute md:relative z-40 h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
             <div class="p-6 md:p-8 flex justify-between items-center">
-                <div class="flex items-center gap-3"><span class="text-xl font-black text-white tracking-tighter italic hidden md:block">GESTOR.MD</span><span class="text-xl font-black text-white tracking-tighter italic md:hidden">MENU</span></div>
+                <div class="flex items-center gap-3">
+                    <img src="/static/logo.png" alt="Logo MD" class="h-10 w-auto hidden md:block" onerror="this.style.display='none'">
+                    <span class="text-xl font-black text-white tracking-tighter italic hidden md:block">GESTOR.MD</span>
+                    <span class="text-xl font-black text-white tracking-tighter italic md:hidden">MENU</span>
+                </div>
                 <button onclick="toggleMenu()" class="md:hidden text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
@@ -214,7 +223,13 @@
             </div>
 
             <div id="page-financeiro" class="page-view hidden flex-1">
-                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl font-bold text-white">Financeiro Contábil</h2></div><button onclick="abrirNovaFin()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i>Novo Lançamento</button></div>
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
+                    <div><h2 class="text-2xl font-bold text-white">Financeiro Contábil</h2></div>
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <button onclick="exportarFechamento()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-file-pdf mr-2"></i>Exportar PDF</button>
+                        <button onclick="abrirNovaFin()" class="bg-brand hover:bg-blue-500 text-white px-4 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i>Novo Lançamento</button>
+                    </div>
+                </div>
                 <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
                     <table class="w-full text-sm text-left min-w-[800px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data</th><th class="p-4">Descrição</th><th class="p-4">Valor</th><th class="p-4">Status / NF</th><th class="p-4 text-center">Conciliado</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-financeiro" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
@@ -238,7 +253,10 @@
 
     <div id="tech-screen" class="hidden w-full flex-col h-full bg-darkbg overflow-hidden relative">
         <header class="bg-sidebarbg border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 shrink-0">
-            <div><p id="tech-name" class="text-white font-bold text-lg"></p><p class="text-[10px] text-brand font-black uppercase tracking-widest">Portal do Técnico</p></div>
+            <div class="flex items-center gap-3">
+                <img src="/static/logo.png" alt="Logo" class="h-8 w-auto" onerror="this.style.display='none'">
+                <div><p id="tech-name" class="text-white font-bold text-lg leading-tight"></p><p class="text-[10px] text-brand font-black uppercase tracking-widest">Portal do Técnico</p></div>
+            </div>
             <button onclick="logout()" class="w-10 h-10 rounded-full bg-slate-800 text-red-400 flex items-center justify-center transition active:scale-95 shadow-md"><i class="fa-solid fa-power-off"></i></button>
         </header>
         
@@ -410,7 +428,7 @@
             chartOs = new Chart(ctxOs, { type: 'doughnut', data: { labels: Object.keys(data.grafico_os), datasets: [{ data: Object.values(data.grafico_os), backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } } } });
         }
 
-        // --- FINANCEIRO (COM COMPROVANTES) ---
+        // --- FINANCEIRO (COM PREVIEW DE COMPROVANTES) ---
         async function loadFinanceiro() {
             const res = await fetch(`${API_URL}/financeiro${getQueryString()}`); arrayFinanceiro = await res.json();
             document.getElementById('tb-financeiro').innerHTML = arrayFinanceiro.map(f => `
@@ -420,7 +438,10 @@
                     <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">R$ ${f.valor.toFixed(2)}</td>
                     <td class="p-4 text-xs text-slate-400">${f.status_pagamento} / NF: ${f.status_nf}</td>
                     <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-500'}"></i></td>
-                    <td class="p-4 text-center"><button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
+                    <td class="p-4 text-center">
+                        <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 mr-3" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
+                        <button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    </td>
                 </tr>`).join('');
         }
 
@@ -433,7 +454,6 @@
             const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
             document.getElementById('fin-id').value=f.id; document.getElementById('fin-empresa').value=f.empresa; document.getElementById('fin-desc').value=f.descricao; document.getElementById('fin-valor').value=f.valor; document.getElementById('fin-tipo').value=f.tipo; document.getElementById('fin-categoria').value=f.categoria; document.getElementById('fin-status-pgto').value=f.status_pagamento; document.getElementById('fin-status-nf').value=f.status_nf; document.getElementById('fin-data-emissao').value=f.data_emissao||""; document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; document.getElementById('fin-id-os').value=f.id_os||""; document.getElementById('fin-conciliado').value=f.conciliado||"Não";
             
-            // Carregar Comprovantes Existentes
             const rArq = await fetch(`${API_URL}/arquivos/comprovantes/${id}`); const dArq = await rArq.json();
             document.getElementById('fin-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/comprovantes/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-paperclip mr-1"></i>${a}</a>`).join('');
             abrirModal('modal-fin'); 
@@ -446,7 +466,6 @@
             const res = await fetch(id ? `${API_URL}/financeiro/${id}` : `${API_URL}/financeiro`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
             const savedData = await res.json();
             
-            // Upload File
             const fileInput = document.getElementById('fin-docs');
             if(fileInput.files.length > 0) {
                 const formData = new FormData(); for(let i=0; i<fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]);
@@ -534,6 +553,30 @@
         }
         async function atualizarStatusOS(id) { await fetch(`${API_URL}/os/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: document.getElementById(`status-${id}`).value, relatorio_tecnico: document.getElementById(`relatorio-${id}`).value }) }); alert("Salvo!"); loadTechWeekView(); }
         async function enviarEvidencias(id) { const fileInput = document.getElementById(`evidencias-${id}`); if(fileInput.files.length === 0) return alert("Selecione fotos!"); const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/upload/evidencias/${id}`, { method: 'POST', body: fData }); alert("Fotos enviadas!"); fileInput.value = ""; }
+
+        // --- NOVAS FUNÇÕES DA CONTABILIDADE (FASE 2) ---
+        function exportarFechamento() {
+            // Usa o filtro de datas global atual para gerar o PDF
+            const urlPDF = `${API_URL}/relatorio/financeiro/pdf${getQueryString()}`;
+            window.open(urlPDF, '_blank');
+        }
+
+        async function previewComprovante(id) {
+            try {
+                const res = await fetch(`${API_URL}/arquivos/comprovantes/${id}`);
+                const data = await res.json();
+                
+                if (data.arquivos && data.arquivos.length > 0) {
+                    // Abre o primeiro arquivo anexado em uma nova guia
+                    const urlArquivo = `${API_URL}/download/comprovantes/${id}/${data.arquivos[0]}`;
+                    window.open(urlArquivo, '_blank');
+                } else {
+                    alert("Nenhum comprovante ou NF anexado a este lançamento.");
+                }
+            } catch (err) {
+                alert("Erro ao buscar o comprovante.");
+            }
+        }
     </script>
 </body>
 </html>

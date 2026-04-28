@@ -12,6 +12,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
+from fpdf import FPDF
+import tempfile
 
 # --- PROTEÇÃO ANTI-CRASH: Importação Segura do OneDrive ---
 try:
@@ -210,6 +212,71 @@ def update_financeiro(id: int, req: FinanceiroRequest):
         })
         conn.commit()
     return {"status": "ok"}
+
+@app.get("/api/relatorio/financeiro/pdf")
+def gerar_pdf_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None):
+    with database.conectar() as conn:
+        query = "SELECT * FROM financeiro WHERE status_pagamento = 'Pago'"
+        params = {}
+        if inicio and fim:
+            query += " AND date(COALESCE(data_pagamento, data_registro)) BETWEEN :i AND :f"
+            params = {"i": inicio, "f": fim}
+        query += " ORDER BY data_pagamento ASC"
+        df = pd.read_sql_query(text(query), conn, params=params)
+
+    # Cálculos
+    total_entrada = df[df['tipo'] == 'Entrada']['valor'].sum() if not df.empty else 0
+    total_saida = df[df['tipo'] == 'Saída']['valor'].sum() if not df.empty else 0
+    saldo = total_entrada - total_saida
+
+    # Criando o PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    
+    # Cabeçalho
+    pdf.cell(200, 10, txt="MD Solucoes - Relatorio de Fechamento Financeiro", ln=True, align='C')
+    pdf.set_font("Arial", '', 10)
+    periodo_texto = f"Periodo: {inicio} ate {fim}" if inicio and fim else "Periodo: Todo o Historico"
+    pdf.cell(200, 10, txt=periodo_texto, ln=True, align='C')
+    pdf.ln(10)
+
+    # Resumo
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="Resumo Consolidado:", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(200, 8, txt=f"Total de Entradas: R$ {total_entrada:.2f}", ln=True)
+    pdf.cell(200, 8, txt=f"Total de Saidas: R$ {total_saida:.2f}", ln=True)
+    pdf.cell(200, 8, txt=f"SALDO LIQUIDO: R$ {saldo:.2f}", ln=True)
+    pdf.ln(10)
+
+    # Tabela de Lançamentos
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(30, 8, "Data", border=1)
+    pdf.cell(80, 8, "Descricao", border=1)
+    pdf.cell(40, 8, "Categoria", border=1)
+    pdf.cell(40, 8, "Valor", border=1)
+    pdf.ln()
+
+    pdf.set_font("Arial", '', 9)
+    for index, row in df.iterrows():
+        data_str = str(row['data_pagamento']) if pd.notna(row['data_pagamento']) else str(row['data_emissao'])
+        # Removendo acentos para evitar erros na fonte Arial padrão do FPDF
+        desc = str(row['descricao']).encode('ascii', 'ignore').decode('ascii')[:35]
+        cat = str(row['categoria']).encode('ascii', 'ignore').decode('ascii')[:15]
+        val = f"R$ {row['valor']:.2f} ({row['tipo'][0]})"
+        
+        pdf.cell(30, 8, data_str, border=1)
+        pdf.cell(80, 8, desc, border=1)
+        pdf.cell(40, 8, cat, border=1)
+        pdf.cell(40, 8, val, border=1)
+        pdf.ln()
+
+    # Salva em arquivo temporário e envia para o usuário
+    temp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp.name)
+    
+    return FileResponse(temp.name, media_type='application/pdf', filename=f"Fechamento_MD.pdf")
 
 
 # --- ROTAS DE ORDENS DE SERVIÇO ---
