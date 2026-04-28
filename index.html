@@ -656,13 +656,38 @@ async function loadDashboard() {
                 hC += `<h3 class="text-xs font-black text-brand uppercase mt-6 mb-2">${d === hjReal ? "HOJE" : formatData(d)}</h3>`;
                 for(let o of agrupado[d]) {
                     hC += `
-                    <div class="bg-cardbg border border-slate-800 rounded-xl mb-4 p-4 shadow-xl">
-                        <div class="flex justify-between items-start mb-4"><div><span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-white border border-slate-700">OS #${o.numero_os}</span><h4 class="text-white font-bold mt-2">${o.cliente}</h4><p class="text-xs text-brand mt-1">${o.endereco}</p></div></div>
-                        <p class="text-xs text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800">${o.servico_descricao}</p>
-                        <div class="mt-4 border-t border-slate-800 pt-4">
-                            <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded p-3 text-xs mb-2" placeholder="Relatório...">${o.relatorio_tecnico || ''}</textarea>
-                            <div class="flex gap-2 mb-4"><select id="status-${o.id}" class="w-1/2 bg-slate-800 text-white rounded p-3 text-xs"><option ${o.status==='Pendente'?'selected':''}>Pendente</option><option ${o.status==='Em Execução'?'selected':''}>Em Execução</option><option ${o.status==='Concluído'?'selected':''}>Concluído</option></select><button onclick="atualizarStatusOS(${o.id})" class="w-1/2 bg-brand text-white font-bold py-3 rounded text-xs">SALVAR</button></div>
-                            <input type="file" id="evidencias-${o.id}" multiple class="w-full text-[10px] text-slate-500 mb-2"><button onclick="enviarEvidencias(${o.id})" class="w-full bg-emerald-600 text-white font-bold py-2 rounded text-xs">ENVIAR FOTOS</button>
+                    <div class="bg-cardbg border border-slate-800 rounded-xl mb-4 shadow-lg overflow-hidden">
+                        <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-slate-800/50 transition active:bg-slate-800" onclick="toggleOS(${o.id})">
+                            <div>
+                                <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-white border border-slate-700">OS #${o.numero_os}</span>
+                                <h4 class="text-white font-bold mt-2 text-sm">${o.cliente}</h4>
+                                <p class="text-xs text-brand mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${o.endereco}</p>
+                            </div>
+                            <div class="text-slate-400 bg-slate-900/50 w-8 h-8 rounded-full flex items-center justify-center">
+                                <i id="icone-os-${o.id}" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+                            </div>
+                        </div>
+                        
+                        <div id="corpo-os-${o.id}" class="hidden border-t border-slate-800 bg-slate-900/30 p-4">
+                            <p class="text-xs text-slate-400 bg-slate-800/50 p-3 rounded border border-slate-700 mb-4">${o.servico_descricao}</p>
+                            
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Relatório Técnico</label>
+                            <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded-lg p-3 text-xs mb-3 border border-slate-700 focus:border-brand outline-none transition" rows="3" placeholder="Descreva o que foi feito...">${o.relatorio_tecnico || ''}</textarea>
+                            
+                            <div class="flex gap-2 mb-4">
+                                <select id="status-${o.id}" class="w-1/2 bg-slate-800 text-white rounded-lg p-3 text-sm font-bold border border-slate-700 outline-none">
+                                    <option value="Pendente" ${o.status==='Pendente'?'selected':''}>Pendente</option>
+                                    <option value="Em Execução" ${o.status==='Em Execução'?'selected':''}>Em Execução</option>
+                                    <option value="Concluído" ${o.status==='Concluído'?'selected':''}>Concluído</option>
+                                </select>
+                                <button onclick="atualizarStatusOS(${o.id})" class="w-1/2 bg-brand hover:bg-blue-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-lg"><i class="fa-solid fa-floppy-disk mr-1"></i> SALVAR</button>
+                            </div>
+                            
+                            <div class="mt-2 pt-4 border-t border-slate-800">
+                                <label class="block text-[10px] font-bold text-emerald-500 mb-2 uppercase"><i class="fa-solid fa-camera mr-1"></i> Anexar Fotos / Evidências</label>
+                                <input type="file" id="evidencias-${o.id}" multiple class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-slate-800 file:border-0 file:text-white hover:file:bg-slate-700 mb-3 transition cursor-pointer">
+                                <button onclick="enviarEvidencias(${o.id})" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-lg"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> ENVIAR FOTOS</button>
+                            </div>
                         </div>
                     </div>`;
                 }
@@ -693,6 +718,20 @@ async function loadDashboard() {
                 }
             } catch (err) {
                 alert("Erro ao buscar o comprovante.");
+            }
+        }
+
+        // --- ANIMAÇÃO DOS CARDS DO TÉCNICO ---
+        function toggleOS(id) {
+            const corpo = document.getElementById(`corpo-os-${id}`);
+            const icone = document.getElementById(`icone-os-${id}`);
+            
+            if (corpo.classList.contains('hidden')) {
+                corpo.classList.remove('hidden');
+                icone.classList.add('rotate-180'); // Vira a setinha pra cima
+            } else {
+                corpo.classList.add('hidden');
+                icone.classList.remove('rotate-180'); // Vira a setinha pra baixo
             }
         }
     </script>
