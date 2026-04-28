@@ -146,21 +146,36 @@ def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
         params = {}
         
         if inicio and fim:
-            f_fin += " AND date(data_pagamento) BETWEEN :inicio AND :fim"
+            f_fin += " AND date(COALESCE(data_pagamento, data_registro)) BETWEEN :inicio AND :fim"
             f_os += " AND date(data_programada) BETWEEN :inicio AND :fim"
             params = {"inicio": inicio, "fim": fim}
             
-        df_fin = pd.read_sql_query(text(f"SELECT valor, tipo FROM financeiro {f_fin}"), conn, params=params)
+        df_fin = pd.read_sql_query(text(f"SELECT valor, tipo, COALESCE(data_pagamento, date(data_registro)) as data FROM financeiro {f_fin}"), conn, params=params)
         df_os = pd.read_sql_query(text(f"SELECT status FROM ordens_servico {f_os}"), conn, params=params)
         
     faturamento = float(df_fin[df_fin['tipo'] == 'Entrada']['valor'].sum()) if not df_fin.empty else 0
     despesas = float(df_fin[df_fin['tipo'] == 'Saída']['valor'].sum()) if not df_fin.empty else 0
     
+    # Processamento do Gráfico de Linhas (Eixo X = Data, Eixo Y = Valor)
+    grafico_fin = {"datas": [], "receitas": [], "despesas": []}
+    if not df_fin.empty:
+        df_fin['data'] = pd.to_datetime(df_fin['data']).dt.strftime('%Y-%m-%d')
+        grouped = df_fin.groupby(['data', 'tipo'])['valor'].sum().unstack(fill_value=0).reset_index()
+        
+        if 'Entrada' not in grouped.columns: grouped['Entrada'] = 0
+        if 'Saída' not in grouped.columns: grouped['Saída'] = 0
+        
+        grouped = grouped.sort_values('data')
+        grafico_fin["datas"] = grouped['data'].tolist()
+        grafico_fin["receitas"] = grouped['Entrada'].tolist()
+        grafico_fin["despesas"] = grouped['Saída'].tolist()
+
     return {
         "faturamento_global": faturamento,
         "despesas_globais": despesas,
         "total_os": len(df_os),
-        "grafico_os": df_os['status'].value_counts().to_dict() if not df_os.empty else {}
+        "grafico_os": df_os['status'].value_counts().to_dict() if not df_os.empty else {},
+        "grafico_fin": grafico_fin
     }
 
 
