@@ -739,6 +739,45 @@ async function loadDashboard() {
                 icone.classList.remove('rotate-180'); // Vira a setinha pra baixo
             }
         }
+
+        async function marcarComoPago(id) {
+            if(!confirm("Dar baixa neste lançamento com a data de HOJE?")) return;
+            
+            // Acha o lançamento na memória
+            const f = arrayFinanceiro.find(x => x.id == id); 
+            if(!f) return;
+            
+            // Prepara o pacote mantendo tudo igual, mas forçando o status para Pago e a data de pagamento para hoje
+            const payload = { 
+                empresa: f.empresa, 
+                descricao: f.descricao, 
+                valor: parseFloat(f.valor), 
+                tipo: f.tipo, 
+                categoria: f.categoria, 
+                status_pagamento: "Pago", 
+                status_nf: f.status_nf, 
+                data_emissao: f.data_emissao || null, 
+                data_pagamento: getStrDate(new Date()), // Automático: Hoje
+                id_os: f.id_os || null, 
+                conciliado: f.conciliado || "Não" 
+            };
+            
+            try {
+                // Manda pro backend usando a mesma rota de edição
+                await fetch(`${API_URL}/financeiro/${id}`, { 
+                    method: 'PUT', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                // Recarrega a tabela e o painel inicial para os números do gráfico atualizarem!
+                loadFinanceiro(); 
+                loadDashboard(); 
+            } catch(e) {
+                alert("Erro ao confirmar pagamento.");
+            }
+        }
+        
     </script>
 </body>
 </html>
