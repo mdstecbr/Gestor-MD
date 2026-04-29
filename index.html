@@ -42,7 +42,7 @@
                 <label class="block text-xs font-bold text-slate-500 mb-1">DESCRIÇÃO DO LANÇAMENTO</label>
                 <input type="text" id="fin-desc" placeholder="Ex: Pagamento Fornecedor X" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">VALOR (R$)</label><input type="number" step="0.01" id="fin-valor" placeholder="0.00" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">VALOR (R$)</label><input type="text" id="fin-valor" oninput="formatarMoedaInput(this)" placeholder="0,00" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label><select id="fin-tipo" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Entrada</option><option>Saída</option></select></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-3">
@@ -557,7 +557,7 @@ async function loadDashboard() {
                 <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
                     <td class="p-4 text-xs text-slate-500">${formatData(f.data_pagamento || f.data_registro)}</td>
                     <td class="p-4 text-white"><p>${f.descricao}</p><p class="text-[10px] text-slate-500">${f.empresa} ${f.id_os ? '| OS #'+f.id_os : ''}</p></td>
-                    <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">R$ ${f.valor.toFixed(2)}</td>
+                    <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">${formatMoeda(f.valor)}</td>
                     <td class="p-4 text-xs text-slate-400">
                         <span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span> / NF: ${f.status_nf}
                     </td>
@@ -577,7 +577,21 @@ async function loadDashboard() {
 
         async function editarFin(id) { 
             const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
-            document.getElementById('fin-id').value=f.id; document.getElementById('fin-empresa').value=f.empresa; document.getElementById('fin-desc').value=f.descricao; document.getElementById('fin-valor').value=f.valor; document.getElementById('fin-tipo').value=f.tipo; document.getElementById('fin-categoria').value=f.categoria; document.getElementById('fin-status-pgto').value=f.status_pagamento; document.getElementById('fin-status-nf').value=f.status_nf; document.getElementById('fin-data-emissao').value=f.data_emissao||""; document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; document.getElementById('fin-id-os').value=f.id_os||""; document.getElementById('fin-conciliado').value=f.conciliado||"Não";
+            document.getElementById('fin-id').value=f.id; 
+            document.getElementById('fin-empresa').value=f.empresa; 
+            document.getElementById('fin-desc').value=f.descricao; 
+            
+            // Aqui aplicamos o formato BR (ex: 4.656,00) de volta no input
+            document.getElementById('fin-valor').value = f.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
+            
+            document.getElementById('fin-tipo').value=f.tipo; 
+            document.getElementById('fin-categoria').value=f.categoria; 
+            document.getElementById('fin-status-pgto').value=f.status_pagamento; 
+            document.getElementById('fin-status-nf').value=f.status_nf; 
+            document.getElementById('fin-data-emissao').value=f.data_emissao||""; 
+            document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; 
+            document.getElementById('fin-id-os').value=f.id_os||""; 
+            document.getElementById('fin-conciliado').value=f.conciliado||"Não";
             
             const rArq = await fetch(`${API_URL}/arquivos/comprovantes/${id}`); const dArq = await rArq.json();
             document.getElementById('fin-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/comprovantes/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-paperclip mr-1"></i>${a}</a>`).join('');
@@ -586,7 +600,23 @@ async function loadDashboard() {
 
         async function salvarFinanceiro(e) {
             e.preventDefault(); const id = document.getElementById('fin-id').value;
-            const payload = { empresa: document.getElementById('fin-empresa').value, descricao: document.getElementById('fin-desc').value, valor: parseFloat(document.getElementById('fin-valor').value), tipo: document.getElementById('fin-tipo').value, categoria: document.getElementById('fin-categoria').value, status_pagamento: document.getElementById('fin-status-pgto').value, status_nf: document.getElementById('fin-status-nf').value, data_emissao: document.getElementById('fin-data-emissao').value || null, data_pagamento: document.getElementById('fin-data-pagamento').value || null, id_os: document.getElementById('fin-id-os').value ? parseInt(document.getElementById('fin-id-os').value) : null, conciliado: document.getElementById('fin-conciliado').value };
+            
+            // Removemos os pontos e trocamos a vírgula por ponto para o banco de dados entender
+            const valorRaw = document.getElementById('fin-valor').value.replace(/\./g, '').replace(',', '.');
+            
+            const payload = { 
+                empresa: document.getElementById('fin-empresa').value, 
+                descricao: document.getElementById('fin-desc').value, 
+                valor: parseFloat(valorRaw), 
+                tipo: document.getElementById('fin-tipo').value, 
+                categoria: document.getElementById('fin-categoria').value, 
+                status_pagamento: document.getElementById('fin-status-pgto').value, 
+                status_nf: document.getElementById('fin-status-nf').value, 
+                data_emissao: document.getElementById('fin-data-emissao').value || null, 
+                data_pagamento: document.getElementById('fin-data-pagamento').value || null, 
+                id_os: document.getElementById('fin-id-os').value ? parseInt(document.getElementById('fin-id-os').value) : null, 
+                conciliado: document.getElementById('fin-conciliado').value 
+            };
             
             const res = await fetch(id ? `${API_URL}/financeiro/${id}` : `${API_URL}/financeiro`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
             const savedData = await res.json();
@@ -596,7 +626,7 @@ async function loadDashboard() {
                 const formData = new FormData(); for(let i=0; i<fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]);
                 await fetch(`${API_URL}/upload/comprovantes/${id ? id : savedData.id}`, { method: 'POST', body: formData });
             }
-            fecharModal('modal-fin'); loadFinanceiro();
+            fecharModal('modal-fin'); loadFinanceiro(); loadDashboard();
         }
 
         // --- OS ---
@@ -791,6 +821,19 @@ async function loadDashboard() {
             }
         }
 
+        // --- MÁSCARA DE MOEDA BRASILEIRA ---
+        function formatarMoedaInput(input) {
+            let v = input.value.replace(/\D/g, ''); // Remove tudo que não é número
+            if(v === '') { input.value = ''; return; }
+            
+            v = (v / 100).toFixed(2) + '';
+            v = v.replace(".", ",");
+            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            
+            input.value = v;
+        }
+        
     </script>
 </body>
 </html>
