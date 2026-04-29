@@ -4,9 +4,11 @@ from sqlalchemy import create_engine, text
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+    # Ajuste obrigatório para o SQLAlchemy entender o Postgres
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
         
+    # FORÇA BRUTA: Se for banco em nuvem, garante que tem criptografia SSL (Exigência do Neon.tech)
     if "sslmode=require" not in DATABASE_URL and ("neon.tech" in DATABASE_URL or "render.com" in DATABASE_URL):
         separator = "&" if "?" in DATABASE_URL else "?"
         DATABASE_URL += f"{separator}sslmode=require"
@@ -18,6 +20,7 @@ else:
     IS_POSTGRES = False
     print("🟡 PREPARANDO SQLITE LOCAL")
 
+# O pool_pre_ping evita que conexões adormecidas derrubem o servidor
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 def conectar():
@@ -48,9 +51,24 @@ def inicializar_banco():
                 conn.execute(text("ALTER TABLE financeiro ADD COLUMN conciliado TEXT DEFAULT 'Não'"))
                 conn.commit()
             except:
-                conn.rollback() # Limpa o erro se a coluna já existir
+                conn.rollback()
 
-        # BLOCO 3: Verificação e Criação do Admin
+        # BLOCO 3: Colunas de Hora Extra no Ponto (Novidade!)
+        with conectar() as conn:
+            try:
+                conn.execute(text("ALTER TABLE registro_ponto ADD COLUMN is_he TEXT DEFAULT 'Não'"))
+                conn.commit()
+            except:
+                conn.rollback()
+
+        with conectar() as conn:
+            try:
+                conn.execute(text("ALTER TABLE registro_ponto ADD COLUMN motivo_he TEXT"))
+                conn.commit()
+            except:
+                conn.rollback()
+
+        # BLOCO 4: Verificação e Criação do Admin
         with conectar() as conn:
             if not conn.execute(text("SELECT id FROM usuarios WHERE usuario = 'admin'")).fetchone():
                 conn.execute(text("INSERT INTO usuarios (nome, usuario, senha, perfil) VALUES ('Administrador', 'admin', 'admin123', 'Admin')"))

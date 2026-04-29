@@ -226,7 +226,7 @@
             <div id="page-ponto" class="page-view hidden flex-1">
                 <h2 class="text-2xl font-bold text-white mb-6">Controle de Ponto</h2>
                 <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
-                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Técnico</th><th class="p-4">Registro</th><th class="p-4">Data/Hora</th><th class="p-4">GPS</th></tr></thead><tbody id="tb-ponto-admin" class="divide-y divide-slate-700/50"></tbody></table>
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Técnico</th><th class="p-4">Registro</th><th class="p-4">Data/Hora</th><th class="p-4">GPS</th><th class="p-4">Hora Extra</th></tr></thead><tbody id="tb-ponto-admin" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
 
@@ -418,17 +418,34 @@
         function registrarPonto() {
             const tipo = (document.getElementById('txt-ponto-status').innerText === "EM SERVIÇO") ? "Saída" : "Entrada";
             if (!confirm(`Registar ${tipo}?`)) return;
+
+            // --- LÓGICA DE HORA EXTRA (HE) ---
+            let is_he = "Não";
+            let motivo_he = "";
+            const hj = new Date();
+            const diaSemana = hj.getDay(); // 0 = Domingo, 6 = Sábado
+            const hora = hj.getHours();
+
+            // Regra: Final de semana (0 ou 6) OU antes das 08h OU depois das 18h
+            if (diaSemana === 0 || diaSemana === 6 || hora < 8 || hora >= 18) {
+                const resp = prompt(`Você está registrando ponto fora do horário padrão.\n\nIsto é uma Hora Extra (HE)?\nSe SIM, digite o motivo abaixo.\nSe NÃO, apenas clique em OK deixando em branco:`);
+                if (resp && resp.trim() !== "") {
+                    is_he = "Sim";
+                    motivo_he = resp.trim();
+                }
+            }
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    async (pos) => { await enviarPonto(tipo, pos.coords.latitude, pos.coords.longitude); }, 
-                    async () => { await enviarPonto(tipo, null, null); },
+                    async (pos) => { await enviarPonto(tipo, pos.coords.latitude, pos.coords.longitude, is_he, motivo_he); }, 
+                    async () => { await enviarPonto(tipo, null, null, is_he, motivo_he); },
                     { enableHighAccuracy: true, timeout: 5000 }
                 );
-            } else enviarPonto(tipo, null, null);
+            } else enviarPonto(tipo, null, null, is_he, motivo_he);
         }
 
-        async function enviarPonto(tipo, lat, lng) {
-            await fetch(`${API_URL}/ponto`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id_tecnico: id_usuario_logado, tipo: tipo, lat: lat, lng: lng }) });
+        async function enviarPonto(tipo, lat, lng, is_he, motivo_he) {
+            await fetch(`${API_URL}/ponto`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id_tecnico: id_usuario_logado, tipo: tipo, lat: lat, lng: lng, is_he: is_he, motivo_he: motivo_he }) });
             alert("Ponto registado!"); atualizarStatusPontoUI();
         }
 
@@ -436,10 +453,13 @@
             const res = await fetch(`${API_URL}/ponto/admin`); const data = await res.json();
             document.getElementById('tb-ponto-admin').innerHTML = data.map(p => `
                 <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 text-white">${p.tecnico}</td>
+                    <td class="p-4 text-white font-bold">${p.tecnico}</td>
                     <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td>
                     <td class="p-4 text-slate-400 text-xs">${new Date(p.data_hora).toLocaleString('pt-BR')}</td>
-                    <td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=$${p.latitude},${p.longitude}" target="_blank" class="text-brand underline text-xs">Ver Mapa</a>` : '-'}</td>
+                    <td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}" target="_blank" class="text-brand hover:text-blue-400 underline text-xs font-bold"><i class="fa-solid fa-location-dot mr-1"></i>Ver Mapa</a>` : '-'}</td>
+                    <td class="p-4 text-xs">
+                        ${p.is_he === 'Sim' ? `<span class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded font-bold cursor-help" title="Motivo: ${p.motivo_he}">SIM <i class="fa-solid fa-circle-info ml-1"></i></span>` : `<span class="text-slate-600">Não</span>`}
+                    </td>
                 </tr>`).join('');
         }
 
@@ -833,7 +853,7 @@ async function loadDashboard() {
             
             input.value = v;
         }
-        
+
     </script>
 </body>
 </html>

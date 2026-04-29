@@ -120,9 +120,11 @@ class StatusOSRequest(BaseModel):
 
 class PontoRequest(BaseModel):
     id_tecnico: int
-    tipo: str # 'Entrada' ou 'Saída'
+    tipo: str
     lat: Optional[float] = None
     lng: Optional[float] = None
+    is_he: Optional[str] = "Não"
+    motivo_he: Optional[str] = ""
 
 
 # --- ROTAS DE AUTENTICAÇÃO ---
@@ -378,8 +380,8 @@ def update_os_status(id: int, req: StatusOSRequest):
 def bater_ponto(req: PontoRequest):
     dh_br = hora_brasil().strftime("%Y-%m-%d %H:%M:%S")
     with database.conectar() as conn:
-        query = text("INSERT INTO registro_ponto (id_tecnico, tipo, latitude, longitude, data_hora) VALUES (:id, :t, :la, :lo, :dh)")
-        conn.execute(query, {"id": req.id_tecnico, "t": req.tipo, "la": req.lat, "lo": req.lng, "dh": dh_br})
+        query = text("INSERT INTO registro_ponto (id_tecnico, tipo, latitude, longitude, data_hora, is_he, motivo_he) VALUES (:id, :t, :la, :lo, :dh, :he, :mot)")
+        conn.execute(query, {"id": req.id_tecnico, "t": req.tipo, "la": req.lat, "lo": req.lng, "dh": dh_br, "he": req.is_he, "mot": req.motivo_he})
         conn.commit()
     return {"status": "ok"}
 
