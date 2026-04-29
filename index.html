@@ -232,20 +232,33 @@
 
             <div id="page-financeiro" class="page-view hidden flex-1">
                 <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
-    <div><h2 class="text-2xl font-bold text-white">Ordens de Serviço</h2></div>
-    <div class="flex flex-col md:flex-row gap-2">
-        <select id="filtro-status-os" onchange="loadOS()" class="bg-slate-800 border border-slate-600 rounded-lg p-3 text-sm text-white font-bold outline-none focus:border-brand transition">
-            <option value="">Todos os Status</option>
-            <option value="Pendente">Pendente</option>
-            <option value="Em Execução">Em Execução</option>
-            <option value="Concluído">Concluído</option>
-            <option value="Cancelada">Cancelada</option>
-        </select>
-        <button onclick="abrirNovaOS()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-bolt mr-2"></i>Emitir OS</button>
-    </div>
-</div>
+                    <div><h2 class="text-2xl font-bold text-white">Financeiro Contábil</h2></div>
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <button onclick="exportarFechamento()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-file-pdf mr-2"></i>Exportar PDF</button>
+                        <button onclick="abrirNovaFin()" class="bg-brand hover:bg-blue-500 text-white px-4 py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i>Novo Lançamento</button>
+                    </div>
+                </div>
                 <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
                     <table class="w-full text-sm text-left min-w-[800px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data</th><th class="p-4">Descrição</th><th class="p-4">Valor</th><th class="p-4">Status / NF</th><th class="p-4 text-center">Conciliado</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-financeiro" class="divide-y divide-slate-700/50"></tbody></table>
+                </div>
+            </div>
+
+            <div id="page-os" class="page-view hidden flex-1">
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
+                    <div><h2 class="text-2xl font-bold text-white">Ordens de Serviço</h2></div>
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <select id="filtro-status-os" onchange="loadOS()" class="bg-slate-800 border border-slate-600 rounded-lg p-3 text-sm text-white font-bold outline-none focus:border-brand transition">
+                            <option value="">Todos os Status</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Em Execução">Em Execução</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                        <button onclick="abrirNovaOS()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-bolt mr-2"></i>Emitir OS</button>
+                    </div>
+                </div>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data Prog.</th><th class="p-4">OS</th><th class="p-4">Cliente</th><th class="p-4">Técnico</th><th class="p-4">Status</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-os" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
 
@@ -777,7 +790,7 @@ async function loadDashboard() {
                 alert("Erro ao confirmar pagamento.");
             }
         }
-        
+
     </script>
 </body>
 </html>
