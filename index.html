@@ -426,9 +426,25 @@
             const diaSemana = hj.getDay(); // 0 = Domingo, 6 = Sábado
             const hora = hj.getHours();
 
-            // Regra: Final de semana (0 ou 6) OU antes das 08h OU depois das 17h
-            if (diaSemana === 0 || diaSemana === 6 || hora < 8 || hora >= 17) {
-                const resp = prompt(`Você está registrando ponto fora do horário padrão.\n\nIsto é uma Hora Extra (HE)?\nSe SIM, digite o motivo abaixo.\nSe NÃO, apenas clique em OK deixando em branco:`);
+            // 1. FORMATAR A DATA DE HOJE (Ex: "01/05" ou "25/12")
+            const diaMes = String(hj.getDate()).padStart(2, '0') + '/' + String(hj.getMonth() + 1).padStart(2, '0');
+
+            // 2. LISTA DE FERIADOS NACIONAIS FIXOS
+            const feriados = [
+                "01/01", // Ano Novo
+                "21/04", // Tiradentes
+                "01/05", // Dia do Trabalhador
+                "07/09", // Independência
+                "12/10", // Nossa Sra. Aparecida
+                "02/11", // Finados
+                "15/11", // Proclamação da República
+                "25/12"  // Natal
+            ];
+            const isFeriado = feriados.includes(diaMes);
+
+            // Regra: Final de semana OU Feriado OU antes das 08h OU depois das 18h
+            if (diaSemana === 0 || diaSemana === 6 || isFeriado || hora < 8 || hora >= 18) {
+                const resp = prompt(`Você está registrando ponto fora do horário padrão ou em um feriado.\n\nIsto é uma Hora Extra (HE)?\nSe SIM, digite o motivo abaixo.\nSe NÃO, apenas clique em OK deixando em branco:`);
                 if (resp && resp.trim() !== "") {
                     is_he = "Sim";
                     motivo_he = resp.trim();
