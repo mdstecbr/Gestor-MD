@@ -535,19 +535,24 @@ async function loadDashboard() {
     });
 }
 
-        // --- FINANCEIRO (COM PREVIEW DE COMPROVANTES) ---
+        // --- FINANCEIRO (COM AÇÃO RÁPIDA DE PAGAMENTO) ---
         async function loadFinanceiro() {
-            const res = await fetch(`${API_URL}/financeiro${getQueryString()}`); arrayFinanceiro = await res.json();
+            const res = await fetch(`${API_URL}/financeiro${getQueryString()}`); 
+            arrayFinanceiro = await res.json();
+            
             document.getElementById('tb-financeiro').innerHTML = arrayFinanceiro.map(f => `
                 <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
                     <td class="p-4 text-xs text-slate-500">${formatData(f.data_pagamento || f.data_registro)}</td>
                     <td class="p-4 text-white"><p>${f.descricao}</p><p class="text-[10px] text-slate-500">${f.empresa} ${f.id_os ? '| OS #'+f.id_os : ''}</p></td>
                     <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">R$ ${f.valor.toFixed(2)}</td>
-                    <td class="p-4 text-xs text-slate-400">${f.status_pagamento} / NF: ${f.status_nf}</td>
+                    <td class="p-4 text-xs text-slate-400">
+                        <span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span> / NF: ${f.status_nf}
+                    </td>
                     <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-500'}"></i></td>
-                    <td class="p-4 text-center">
-                        <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 mr-3" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
-                        <button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <td class="p-4 text-center flex justify-center items-center mt-2">
+                        ${f.status_pagamento !== 'Pago' ? `<button onclick="marcarComoPago(${f.id})" class="text-slate-400 hover:text-emerald-500 mr-3 transform hover:scale-110 transition" title="Dar baixa (Marcar como Pago)"><i class="fa-solid fa-circle-check text-lg"></i></button>` : ''}
+                        <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 mr-3 transform hover:scale-110 transition" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
+                        <button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     </td>
                 </tr>`).join('');
         }
