@@ -32,6 +32,54 @@
 </head>
 <body class="bg-darkbg text-slate-300 h-screen flex overflow-hidden">
 
+    <!-- MODAL CLIENTE -->
+    <div id="modal-cliente" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-cardbg p-6 rounded-lg w-full max-w-[500px] border border-slate-700 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-building-user mr-2 text-brand"></i>Cadastro de Cliente</h3>
+            <form onsubmit="salvarCliente(event)">
+                <input type="hidden" id="cli-id">
+                <label class="block text-xs font-bold text-slate-500 mb-1">NOME / RAZÃO SOCIAL</label>
+                <input type="text" id="cli-nome" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">CNPJ / CPF</label><input type="text" id="cli-cnpj" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">TELEFONE</label><input type="text" id="cli-telefone" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                </div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">E-MAIL</label>
+                <input type="email" id="cli-email" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <label class="block text-xs font-bold text-slate-500 mb-1">ENDEREÇO COMPLETO</label>
+                <input type="text" id="cli-endereco" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-4">
+                <div class="flex justify-end gap-3 border-t border-slate-700 pt-4">
+                    <button type="button" onclick="fecharModal('modal-cliente')" class="px-4 py-2 text-slate-400">Cancelar</button>
+                    <button type="submit" class="px-6 py-2 bg-brand text-white font-bold rounded shadow-lg">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FORNECEDOR -->
+    <div id="modal-fornecedor" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-cardbg p-6 rounded-lg w-full max-w-[500px] border border-slate-700 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-truck-fast mr-2 text-emerald-500"></i>Cadastro de Fornecedor</h3>
+            <form onsubmit="salvarFornecedor(event)">
+                <input type="hidden" id="for-id">
+                <label class="block text-xs font-bold text-slate-500 mb-1">NOME / RAZÃO SOCIAL</label>
+                <input type="text" id="for-nome" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">CNPJ / CPF</label><input type="text" id="for-cnpj" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">TELEFONE</label><input type="text" id="for-telefone" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
+                </div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">E-MAIL</label>
+                <input type="email" id="for-email" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <label class="block text-xs font-bold text-slate-500 mb-1">CATEGORIA</label>
+                <select id="for-categoria" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-4"><option>Peças/Equipamentos</option><option>Serviços Terceirizados</option><option>Infraestrutura</option><option>Outros</option></select>
+                <div class="flex justify-end gap-3 border-t border-slate-700 pt-4">
+                    <button type="button" onclick="fecharModal('modal-fornecedor')" class="px-4 py-2 text-slate-400">Cancelar</button>
+                    <button type="submit" class="px-6 py-2 bg-emerald-600 text-white font-bold rounded shadow-lg">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-fin" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div class="bg-cardbg p-6 rounded-lg w-full max-w-[550px] border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 id="modal-fin-title" class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-money-bill-transfer mr-2 text-brand"></i>Lançamento Financeiro</h3>
@@ -200,6 +248,10 @@
                 <button onclick="navegar('os')" id="nav-os" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-file-invoice w-8"></i>Ordens de Serviço</button>
                 <p class="text-[10px] font-bold text-slate-600 px-4 mt-6 mb-2 tracking-widest">GESTÃO</p>
                 <button onclick="navegar('equipe')" id="nav-equipe" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-user-gear w-8"></i>Equipe e Acessos</button>
+                <p class="text-[10px] font-bold text-slate-600 px-4 mt-6 mb-2 tracking-widest">RELACIONAMENTOS</p>
+                <button onclick="navegar('clientes')" id="nav-clientes" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-building-user w-8"></i>Clientes</button>
+                <button onclick="navegar('fornecedores')" id="nav-fornecedores" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-truck-fast w-8"></i>Fornecedores</button>
+            
             </nav>
             <div class="p-6 bg-slate-900/50 border-t border-slate-800 flex items-center justify-between">
                 <div><p id="admin-name" class="text-sm font-bold text-white truncate"></p><p class="text-[10px] text-brand font-bold uppercase tracking-wider" id="admin-perfil-label">Administrador</p></div>
@@ -295,6 +347,30 @@
                     <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Nome</th><th class="p-4">Usuário</th><th class="p-4">Perfil</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-equipe" class="divide-y divide-slate-700/50"></tbody></table>
                 </div>
             </div>
+
+            <!-- VIEW: CLIENTES -->
+            <div id="page-clientes" class="page-view hidden flex-1">
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
+                    <div><h2 class="text-2xl font-bold text-white">Gestão de Clientes</h2></div>
+                    <button onclick="abrirNovoCliente()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i>Novo Cliente</button>
+                </div>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Nome / Empresa</th><th class="p-4">Contato</th><th class="p-4">CNPJ/CPF</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-clientes" class="divide-y divide-slate-700/50"></tbody></table>
+                </div>
+            </div>
+
+            <!-- VIEW: FORNECEDORES -->
+            <div id="page-fornecedores" class="page-view hidden flex-1">
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
+                    <div><h2 class="text-2xl font-bold text-white">Gestão de Fornecedores</h2></div>
+                    <button onclick="abrirNovoFornecedor()" class="bg-brand hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i>Novo Fornecedor</button>
+                </div>
+                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Nome / Empresa</th><th class="p-4">Categoria</th><th class="p-4">Contato</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-fornecedores" class="divide-y divide-slate-700/50"></tbody></table>
+                </div>
+            </div>
+
+
         </main>
     </div>
 
@@ -994,6 +1070,38 @@ async function loadClientesFornecedores() {
             }
         }
 
+
+        // --- GESTÃO DE CLIENTES ---
+        let arrayClientesFull = [];
+        async function loadClientes() {
+            const res = await fetch(`${API_URL}/clientes`); arrayClientesFull = await res.json();
+            document.getElementById('tb-clientes').innerHTML = arrayClientesFull.map(c => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-800/50">
+                    <td class="p-4 text-white font-bold">${c.nome}</td>
+                    <td class="p-4 text-slate-400 text-xs">${c.telefone || '-'}<br>${c.email || '-'}</td>
+                    <td class="p-4 text-slate-400 text-xs">${c.cnpj_cpf || '-'}</td>
+                    <td class="p-4 text-center"><button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button></td>
+                </tr>`).join('');
+        }
+        function abrirNovoCliente() { document.getElementById('cli-id').value=""; document.getElementById('cli-nome').value=""; document.getElementById('cli-cnpj').value=""; document.getElementById('cli-telefone').value=""; document.getElementById('cli-email').value=""; document.getElementById('cli-endereco').value=""; abrirModal('modal-cliente'); }
+        async function salvarCliente(e) { e.preventDefault(); const p = { nome: document.getElementById('cli-nome').value, email: document.getElementById('cli-email').value, telefone: document.getElementById('cli-telefone').value, cnpj_cpf: document.getElementById('cli-cnpj').value, endereco: document.getElementById('cli-endereco').value }; await fetch(`${API_URL}/clientes`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-cliente'); loadClientes(); loadClientesFornecedores(); }
+
+        // --- GESTÃO DE FORNECEDORES ---
+        let arrayFornecedoresFull = [];
+        async function loadFornecedores() {
+            const res = await fetch(`${API_URL}/fornecedores`); arrayFornecedoresFull = await res.json();
+            document.getElementById('tb-fornecedores').innerHTML = arrayFornecedoresFull.map(f => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-800/50">
+                    <td class="p-4 text-white font-bold">${f.nome}</td>
+                    <td class="p-4"><span class="text-[10px] uppercase font-bold text-emerald-500">${f.categoria || '-'}</span></td>
+                    <td class="p-4 text-slate-400 text-xs">${f.telefone || '-'}<br>${f.email || '-'}</td>
+                    <td class="p-4 text-center"><button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button></td>
+                </tr>`).join('');
+        }
+        function abrirNovoFornecedor() { document.getElementById('for-id').value=""; document.getElementById('for-nome').value=""; document.getElementById('for-cnpj').value=""; document.getElementById('for-telefone').value=""; document.getElementById('for-email').value=""; abrirModal('modal-fornecedor'); }
+        async function salvarFornecedor(e) { e.preventDefault(); const p = { nome: document.getElementById('for-nome').value, email: document.getElementById('for-email').value, telefone: document.getElementById('for-telefone').value, cnpj_cpf: document.getElementById('for-cnpj').value, categoria: document.getElementById('for-categoria').value }; await fetch(`${API_URL}/fornecedores`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-fornecedor'); loadFornecedores(); loadClientesFornecedores(); }
+
+        
     </script>
 </body>
 </html>
