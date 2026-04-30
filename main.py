@@ -107,11 +107,11 @@ class OSRequest(BaseModel):
     empresa: str
     numero_os: str
     cliente: str
-    id_cliente: Optional[int] = None  
+    id_cliente: Optional[int] = None
     endereco: Optional[str] = ""
     plataforma: Optional[str] = ""
     servico_descricao: str
-    orientacoes_admin: Optional[str] = "" 
+    orientacoes_admin: Optional[str] = ""
     id_tecnico: int
     data_programada: Optional[str] = None
     status: str
@@ -153,6 +153,9 @@ class OSRequest(BaseModel):
     # ... (mantenha os campos anteriores)
     id_cliente: Optional[int] = None
     orientacoes_admin: Optional[str] = ""
+
+# Inicializa as tabelas e colunas no Neon ao ligar o servidor
+database.inicializar_banco()
 
     # --- ROTAS DE CLIENTES E FORNECEDORES ---
 @app.get("/api/clientes")
