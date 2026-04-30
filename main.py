@@ -16,6 +16,10 @@ from fpdf import FPDF
 import tempfile
 from fastapi.responses import JSONResponse
 from fastapi.responses import PlainTextResponse
+import jwt
+from passlib.context import CryptContext
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 # --- PROTEÇÃO ANTI-CRASH: Importação Segura do OneDrive ---
 try:
@@ -80,7 +84,41 @@ def disparar_email(destinatario: str, assunto: str, corpo_html: str):
     except Exception as e:
         print(f"❌ Erro crítico ao enviar e-mail: {e}")
 
-# --- MODELOS DE DADOS (PYDANTIC) ---
+# --- MOTOR DE SEGURANÇA (JWT & BCRYPT) ---
+# Em produção real, o SECRET_KEY deve vir de uma variável de ambiente (os.environ.get)
+SECRET_KEY = "md_solucoes_super_chave_secreta_2026_!@#" 
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12 # Sessão dura 12 horas (um turno de trabalho)
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
+
+def gerar_hash_senha(senha: str):
+    return pwd_context.hash(senha)
+
+def verificar_senha(senha_pura: str, senha_hash: str):
+    # Fallback: Se a senha no banco não for hash (legado), compara como texto puro
+    if not senha_hash.startswith("$2b$"): 
+        return senha_pura == senha_hash
+    return pwd_context.verify(senha_pura, senha_hash)
+
+def criar_token_acesso(dados: dict):
+    to_encode = dados.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def token_valido(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Trava de segurança: Coloque nas rotas para exigir login válido"""
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Sessão expirada. Faça login novamente.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token de acesso inválido.")
+    
+
 # --- MODELOS DE DADOS (PYDANTIC) ---
 class LoginRequest(BaseModel):
     usuario: str
@@ -195,13 +233,24 @@ def criar_fornecedor(req: FornecedorRequest):
 @app.post("/api/login")
 def login(req: LoginRequest):
     with database.conectar() as conn:
-        query = text("SELECT id, nome, perfil FROM usuarios WHERE usuario = :u AND senha = :s")
-        user = conn.execute(query, {"u": req.usuario, "s": req.senha}).fetchone()
+        # Agora buscamos a senha do banco para comparar com o Bcrypt
+        query = text("SELECT id, nome, perfil, senha FROM usuarios WHERE usuario = :u")
+        user = conn.execute(query, {"u": req.usuario}).fetchone()
         
-        if user:
-            return {"id": user[0], "nome": user[1], "perfil": user[2]}
+        # Se o usuário não existir OU a senha bater errado, recusa.
+        if not user or not verificar_senha(req.senha, user[3]):
+            raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
+
+        # Se passou, fabrica o Token JWT VIP para ele
+        token_data = {"sub": str(user[0]), "nome": user[1], "perfil": user[2]}
+        token_jwt = criar_token_acesso(token_data)
             
-    raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
+        return {
+            "id": user[0], 
+            "nome": user[1], 
+            "perfil": user[2], 
+            "access_token": token_jwt # Enviamos a chave para o frontend
+        }
 
 # --- ROTAS DE DASHBOARD ---
 @app.get("/api/dashboard")
@@ -541,9 +590,10 @@ def list_users():
 
 @app.post("/api/usuarios")
 def create_user(req: UsuarioRequest, tasks: BackgroundTasks):
+    senha_segura = gerar_hash_senha(req.senha) # CRIPTOGRAFA ANTES DO BANCO
     with database.conectar() as conn:
         query = text("INSERT INTO usuarios (nome, email, usuario, senha, perfil) VALUES (:n, :e, :u, :s, :p)")
-        conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "s": req.senha, "p": req.perfil})
+        conn.execute(query, {"n": req.nome, "e": req.email, "u": req.usuario, "s": senha_segura, "p": req.perfil})
         conn.commit()
         
     if req.email:
@@ -554,6 +604,7 @@ def create_user(req: UsuarioRequest, tasks: BackgroundTasks):
 
 @app.put("/api/usuarios/{id}")
 def update_user(id: int, req: UsuarioRequest):
+    senha_segura = gerar_hash_senha(req.senha) # CRIPTOGRAFA ANTES DO BANCO
     try:
         with database.conectar() as conn:
             if req.senha and req.senha.strip() != "":

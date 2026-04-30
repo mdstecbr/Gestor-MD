@@ -566,20 +566,62 @@
             }
         }
 
+        // --- INTERCEPTOR DE REQUISIÇÕES (INJETA O TOKEN JWT) ---
+        async function fetchAPI(endpoint, options = {}) {
+            const token = localStorage.getItem('md_token');
+            const headers = { ...options.headers };
+
+            // Se for JSON e não for FormData, adiciona o Content-Type
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+            }
+
+            // Injeta o crachá de acesso se existir
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+
+            // Se o backend disser "Token Expirado ou Inválido" (Erro 401), expulsa o usuário
+            if (response.status === 401 && endpoint !== '/login') {
+                alert("Sessão expirada por segurança. Faça login novamente.");
+                logout();
+                throw new Error("Sessão Inválida");
+            }
+
+            return response;
+        }
+        
         async function realizarLogin(e) {
             e.preventDefault();
             try {
-                const res = await fetch(`${API_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario: username.value, senha: password.value }) });
+                const res = await fetch(`${API_URL}/login`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ usuario: username.value, senha: password.value }) 
+                });
+                
                 if (res.ok) {
                     const user = await res.json();
                     
-                    // GRAVA NO NAVEGADOR (Persistência para sobreviver ao F5)
+                    // GRAVA O TOKEN E A SESSÃO
                     localStorage.setItem('md_session', JSON.stringify(user));
+                    localStorage.setItem('md_token', user.access_token); // NOVO
                     localStorage.setItem('md_last_activity', Date.now().toString());
                     
                     iniciarInterface(user);
-                } else document.getElementById('login-error').classList.remove('hidden');
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
             } catch (err) { alert("Servidor offline!"); }
+        }
+        
+        function logout() { 
+            localStorage.removeItem('md_session');
+            localStorage.removeItem('md_token'); // LIMPA O TOKEN
+            localStorage.removeItem('md_last_activity');
+            location.reload(); 
         }
 
         function logout() { 
