@@ -163,6 +163,7 @@ class ClienteRequest(BaseModel):
     endereco: Optional[str] = ""
 
 class FornecedorRequest(BaseModel):
+    empresa: str
     nome: str
     email: Optional[str] = ""
     telefone: Optional[str] = ""
@@ -374,8 +375,18 @@ def listar_fornecedores(usuario_logado: dict = Depends(token_valido)):
 @app.post("/api/fornecedores")
 def criar_fornecedor(req: FornecedorRequest, usuario_logado: dict = Depends(token_valido)):
     with database.conectar() as conn:
-        conn.execute(text("INSERT INTO fornecedores (nome, email, telefone, cnpj_cpf, categoria) VALUES (:n, :e, :t, :c, :cat)"), 
-                     {"n": req.nome, "e": req.email, "t": req.telefone, "c": req.cnpj_cpf, "cat": req.categoria})
+        conn.execute(text("""
+            INSERT INTO fornecedores (empresa, nome, email, telefone, cnpj_cpf, categoria) 
+            VALUES (:emp, :n, :e, :t, :c, :cat)
+        """), 
+        {
+            "emp": req.empresa, # <-- NOVO CAMPO
+            "n": req.nome, 
+            "e": req.email, 
+            "t": req.telefone, 
+            "c": req.cnpj_cpf, 
+            "cat": req.categoria
+        })
         conn.commit()
     return {"status": "ok"}
 
