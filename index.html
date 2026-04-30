@@ -43,7 +43,23 @@
                 <input type="text" id="fin-desc" placeholder="Ex: Pagamento Fornecedor X" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">VALOR (R$)</label><input type="text" id="fin-valor" oninput="formatarMoedaInput(this)" placeholder="0,00" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label><select id="fin-tipo" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Entrada</option><option>Saída</option></select></div>
+                    <div>
+    <label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label>
+    <select id="fin-tipo" onchange="toggleEntidadeFinanceiro()" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white">
+        <option value="Entrada">Entrada (Receita)</option>
+        <option value="Saída">Saída (Despesa)</option>
+    </select>
+</div>
+
+<!-- NOVOS CAMPOS DINÂMICOS -->
+<div id="box-fin-cliente" class="mt-3">
+    <label class="block text-xs font-bold text-emerald-500 mb-1">CLIENTE VINCULADO (Origem da Receita)</label>
+    <select id="fin-cliente" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option value="">Selecione um Cliente...</option></select>
+</div>
+<div id="box-fin-fornecedor" class="mt-3 hidden">
+    <label class="block text-xs font-bold text-red-500 mb-1">FORNECEDOR VINCULADO (Destino da Saída)</label>
+    <select id="fin-fornecedor" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option></select>
+</div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE EMISSÃO</label><input type="date" id="fin-data-emissao" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
@@ -754,7 +770,12 @@ async function loadDashboard() {
                         
                         <div id="corpo-os-${o.id}" class="hidden border-t border-slate-800 bg-slate-900/30 p-4">
                             <p class="text-xs text-slate-400 bg-slate-800/50 p-3 rounded border border-slate-700 mb-4">${o.servico_descricao}</p>
-                            
+                            ${o.orientacoes_admin ? `
+    <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4 shadow-inner">
+        <p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Orientações da Base</p>
+        <p class="text-xs text-slate-300 font-medium">${o.orientacoes_admin}</p>
+    </div>
+` : ''}
                             <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Relatório Técnico</label>
                             <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded-lg p-3 text-xs mb-3 border border-slate-700 focus:border-brand outline-none transition" rows="3" placeholder="Descreva o que foi feito...">${o.relatorio_tecnico || ''}</textarea>
                             
@@ -869,6 +890,19 @@ async function loadDashboard() {
             
             input.value = v;
         }
+
+        function toggleEntidadeFinanceiro() {
+    const tipo = document.getElementById('fin-tipo').value;
+    if(tipo === 'Entrada') {
+        document.getElementById('box-fin-cliente').classList.remove('hidden');
+        document.getElementById('box-fin-fornecedor').classList.add('hidden');
+        document.getElementById('fin-fornecedor').value = ""; // Limpa fornecedor
+    } else {
+        document.getElementById('box-fin-cliente').classList.add('hidden');
+        document.getElementById('box-fin-fornecedor').classList.remove('hidden');
+        document.getElementById('fin-cliente').value = ""; // Limpa cliente
+    }
+}
 
     </script>
 </body>

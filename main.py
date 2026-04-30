@@ -126,6 +126,60 @@ class PontoRequest(BaseModel):
     is_he: Optional[str] = "Não"
     motivo_he: Optional[str] = ""
 
+class ClienteRequest(BaseModel):
+    nome: str
+    email: Optional[str] = ""
+    telefone: Optional[str] = ""
+    cnpj_cpf: Optional[str] = ""
+    endereco: Optional[str] = ""
+
+class FornecedorRequest(BaseModel):
+    nome: str
+    email: Optional[str] = ""
+    telefone: Optional[str] = ""
+    cnpj_cpf: Optional[str] = ""
+    categoria: Optional[str] = ""
+
+# Adicione id_cliente e id_fornecedor no FinanceiroRequest
+class FinanceiroRequest(BaseModel):
+    # ... (mantenha os campos anteriores)
+    id_cliente: Optional[int] = None
+    id_fornecedor: Optional[int] = None
+
+# Adicione id_cliente e orientacoes_admin no OSRequest
+class OSRequest(BaseModel):
+    # ... (mantenha os campos anteriores)
+    id_cliente: Optional[int] = None
+    orientacoes_admin: Optional[str] = ""
+
+    # --- ROTAS DE CLIENTES E FORNECEDORES ---
+@app.get("/api/clientes")
+def listar_clientes():
+    with database.conectar() as conn:
+        res = conn.execute(text("SELECT * FROM clientes ORDER BY nome")).mappings().fetchall()
+        return [dict(r) for r in res]
+
+@app.post("/api/clientes")
+def criar_cliente(req: ClienteRequest):
+    with database.conectar() as conn:
+        conn.execute(text("INSERT INTO clientes (nome, email, telefone, cnpj_cpf, endereco) VALUES (:n, :e, :t, :c, :end)"), 
+                     {"n": req.nome, "e": req.email, "t": req.telefone, "c": req.cnpj_cpf, "end": req.endereco})
+        conn.commit()
+    return {"status": "ok"}
+
+@app.get("/api/fornecedores")
+def listar_fornecedores():
+    with database.conectar() as conn:
+        res = conn.execute(text("SELECT * FROM fornecedores ORDER BY nome")).mappings().fetchall()
+        return [dict(r) for r in res]
+
+@app.post("/api/fornecedores")
+def criar_fornecedor(req: FornecedorRequest):
+    with database.conectar() as conn:
+        conn.execute(text("INSERT INTO fornecedores (nome, email, telefone, cnpj_cpf, categoria) VALUES (:n, :e, :t, :c, :cat)"), 
+                     {"n": req.nome, "e": req.email, "t": req.telefone, "c": req.cnpj_cpf, "cat": req.categoria})
+        conn.commit()
+    return {"status": "ok"}
 
 # --- ROTAS DE AUTENTICAÇÃO ---
 @app.post("/api/login")

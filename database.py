@@ -73,6 +73,46 @@ def inicializar_banco():
             if not conn.execute(text("SELECT id FROM usuarios WHERE usuario = 'admin'")).fetchone():
                 conn.execute(text("INSERT INTO usuarios (nome, usuario, senha, perfil) VALUES ('Administrador', 'admin', 'admin123', 'Admin')"))
             conn.commit()
+
+            # BLOCO 6: Clientes, Fornecedores e Novos Relacionamentos
+        with conectar() as conn:
+            # 1. Novas Tabelas
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS clientes (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT NOT NULL,
+                    email TEXT,
+                    telefone TEXT,
+                    cnpj_cpf TEXT,
+                    endereco TEXT,
+                    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS fornecedores (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT NOT NULL,
+                    email TEXT,
+                    telefone TEXT,
+                    cnpj_cpf TEXT,
+                    categoria TEXT,
+                    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.commit()
+
+            # 2. Alterações nas OS e Financeiro (Tratamento de erro individual para caso já existam)
+            try: conn.execute(text("ALTER TABLE ordens_servico ADD COLUMN orientacoes_admin TEXT")); conn.commit()
+            except: conn.rollback()
+            
+            try: conn.execute(text("ALTER TABLE ordens_servico ADD COLUMN id_cliente INTEGER")); conn.commit()
+            except: conn.rollback()
+            
+            try: conn.execute(text("ALTER TABLE financeiro ADD COLUMN id_cliente INTEGER")); conn.commit()
+            except: conn.rollback()
+            
+            try: conn.execute(text("ALTER TABLE financeiro ADD COLUMN id_fornecedor INTEGER")); conn.commit()
+            except: conn.rollback()
             
         print("✅ BANCO DE DADOS CONECTADO E ESTRUTURA VERIFICADA COM SUCESSO!")
         
