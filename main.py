@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from fpdf import FPDF
 import tempfile
 from fastapi.responses import JSONResponse
+from fastapi.responses import PlainTextResponse
 
 # --- PROTEÇÃO ANTI-CRASH: Importação Segura do OneDrive ---
 try:
@@ -158,24 +159,17 @@ class OSRequest(BaseModel):
 # Inicializa as tabelas e colunas no Neon ao ligar o servidor
 database.inicializar_banco()
 
-@app.get("/api/debug/osrequest")
-def debug_osrequest():
-    """
-    Rota de Raio-X: Mostra exatamente quais campos o servidor 
-    está reconhecendo dentro da classe OSRequest neste exato momento.
-    """
+from fastapi.responses import PlainTextResponse
+
+@app.get("/api/debug/ler-codigo")
+def ler_codigo_fonte():
+    """Hack de Engenharia: Lê o próprio arquivo main.py que está rodando no servidor"""
     try:
-        # Tenta listar os campos (Pydantic V2)
-        campos = list(OSRequest.model_fields.keys())
-    except AttributeError:
-        # Fallback para Pydantic V1
-        campos = list(OSRequest.__fields__.keys())
-        
-    return {
-        "status": "diagnostico_concluido",
-        "ambiente": "Render",
-        "campos_reconhecidos_pelo_servidor": campos
-    }
+        with open("main.py", "r", encoding="utf-8") as file:
+            conteudo = file.read()
+            return PlainTextResponse(conteudo)
+    except Exception as e:
+        return PlainTextResponse(f"Erro ao ler arquivo: {str(e)}")
 
     # --- ROTAS DE CLIENTES E FORNECEDORES ---
 @app.get("/api/clientes")
