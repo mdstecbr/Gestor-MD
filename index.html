@@ -285,11 +285,31 @@
             <!-- VIEW: DASHBOARD -->
             <div id="page-dashboard" class="page-view flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Receitas (Pagas)</p><h4 id="dash-in" class="text-xl md:text-2xl font-black text-emerald-400">R$ 0,00</h4></div>
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Despesas (Pagas)</p><h4 id="dash-out" class="text-xl md:text-2xl font-black text-red-400">R$ 0,00</h4></div>
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-brand"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Saldo Líquido</p><h4 id="dash-total" class="text-xl md:text-2xl font-black text-white">R$ 0,00</h4></div>
-                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Ordens de Serviço</p><h4 id="dash-os" class="text-xl md:text-2xl font-black text-white">0</h4></div>
-                </div>
+        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+            <p class="text-xs font-bold text-slate-500 mb-1 uppercase">Receitas (Realizado)</p>
+            <h4 id="dash-in" class="text-xl md:text-2xl font-black text-emerald-400">R$ 0,00</h4>
+            <p class="text-[10px] text-emerald-500/70 mt-2 font-bold tracking-widest uppercase">Previsto: <span id="dash-in-prev">R$ 0,00</span></p>
+        </div>
+        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+            <p class="text-xs font-bold text-slate-500 mb-1 uppercase">Despesas (Realizado)</p>
+            <h4 id="dash-out" class="text-xl md:text-2xl font-black text-red-400">R$ 0,00</h4>
+            <p class="text-[10px] text-red-500/70 mt-2 font-bold tracking-widest uppercase">Previsto: <span id="dash-out-prev">R$ 0,00</span></p>
+        </div>
+        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1 h-full bg-brand"></div>
+            <p class="text-xs font-bold text-slate-500 mb-1 uppercase">Saldo Líquido (Real)</p>
+            <h4 id="dash-total" class="text-xl md:text-2xl font-black text-white">R$ 0,00</h4>
+            <p class="text-[10px] text-brand/70 mt-2 font-bold tracking-widest uppercase">Futuro: <span id="dash-total-prev">R$ 0,00</span></p>
+        </div>
+        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
+            <p class="text-xs font-bold text-slate-500 mb-1 uppercase">Ordens de Serviço</p>
+            <h4 id="dash-os" class="text-xl md:text-2xl font-black text-white">0</h4>
+            <p class="text-[10px] text-orange-500/70 mt-2 font-bold tracking-widest uppercase">Total em pipeline</p>
+        </div>
+    </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
                     <div class="bg-cardbg p-6 rounded-xl border border-slate-700">
@@ -682,14 +702,22 @@
             const res = await fetch(`${API_URL}/dashboard${getQueryString()}`); 
             const data = await res.json();
             
+            // Atualiza os Cards (Realizado)
             document.getElementById('dash-in').innerText = formatMoeda(data.faturamento_global);
             document.getElementById('dash-out').innerText = formatMoeda(data.despesas_globais);
             document.getElementById('dash-total').innerText = formatMoeda(data.faturamento_global - data.despesas_globais);
             document.getElementById('dash-os').innerText = data.total_os;
+
+            // Atualiza os Cards (Previsto)
+            document.getElementById('dash-in-prev').innerText = formatMoeda(data.faturamento_previsto);
+            document.getElementById('dash-out-prev').innerText = formatMoeda(data.despesas_previstas);
             
+            const saldoFuturo = (data.faturamento_global + data.faturamento_previsto) - (data.despesas_globais + data.despesas_previstas);
+            document.getElementById('dash-total-prev').innerText = formatMoeda(saldoFuturo);
+            
+            // Gráfico de Rosca (OS) - Mantido igual
             const ctxOs = document.getElementById('chartOS').getContext('2d');
             if(chartOs) chartOs.destroy();
-            
             const chavesOS = Object.keys(data.grafico_os);
             const valoresOS = Object.values(data.grafico_os);
             const labelsOS = chavesOS.map((chave, i) => `${chave} (${valoresOS[i]})`);
@@ -705,14 +733,14 @@
                     onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; },
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
-                            const index = elements[0].index;
-                            document.getElementById('filtro-status-os').value = chavesOS[index];
+                            document.getElementById('filtro-status-os').value = chavesOS[elements[0].index];
                             navegar('os'); loadOS();
                         }
                     }
                 } 
             });
 
+            // NOVO: Gráfico de Linhas (Financeiro) com Realizado vs Previsto
             const ctxFin = document.getElementById('chartFin').getContext('2d');
             if(chartFin) chartFin.destroy();
             
@@ -723,14 +751,44 @@
                 data: {
                     labels: datasFormatadas,
                     datasets: [
-                        { label: 'Receitas', data: data.grafico_fin.receitas, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, tension: 0.3, fill: true },
-                        { label: 'Despesas', data: data.grafico_fin.despesas, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, tension: 0.3, fill: true }
+                        { 
+                            label: 'Receitas (Real)', 
+                            data: data.grafico_fin.rec_paga, 
+                            borderColor: '#10b981', 
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)', 
+                            borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4
+                        },
+                        { 
+                            label: 'Receitas (Previsto)', 
+                            data: data.grafico_fin.rec_prev, 
+                            borderColor: '#34d399', // Verde mais claro
+                            borderDash: [5, 5], // Linha tracejada
+                            borderWidth: 2, tension: 0.3, fill: false, pointRadius: 2
+                        },
+                        { 
+                            label: 'Despesas (Real)', 
+                            data: data.grafico_fin.desp_paga, 
+                            borderColor: '#ef4444', 
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)', 
+                            borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4
+                        },
+                        { 
+                            label: 'Despesas (Previsto)', 
+                            data: data.grafico_fin.desp_prev, 
+                            borderColor: '#f87171', // Vermelho mais claro
+                            borderDash: [5, 5], // Linha tracejada
+                            borderWidth: 2, tension: 0.3, fill: false, pointRadius: 2
+                        }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
-                    scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } }
+                    plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 15 } } },
+                    scales: { 
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, 
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } 
+                    },
+                    interaction: { mode: 'index', intersect: false } // Melhora a exibição do tooltip
                 }
             });
         }

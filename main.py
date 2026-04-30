@@ -207,20 +207,59 @@ def login(req: LoginRequest):
 @app.get("/api/dashboard")
 def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
     with database.conectar() as conn:
-        f_fin = "WHERE status_pagamento = 'Pago'"
+        # Tática de Engenharia: Buscamos Pagos e Pendentes. Ignoramos Cancelados.
+        f_fin = "WHERE status_pagamento IN ('Pago', 'Pendente')"
         f_os = "WHERE 1=1"
         params = {}
         
         if inicio and fim:
-            f_fin += " AND date(COALESCE(data_pagamento, data_registro)) BETWEEN :inicio AND :fim"
+            # Usa emissão/vencimento para os pendentes, e data de pagamento para os pagos
+            f_fin += " AND date(COALESCE(data_pagamento, data_emissao, data_registro)) BETWEEN :inicio AND :fim"
             f_os += " AND date(data_programada) BETWEEN :inicio AND :fim"
             params = {"inicio": inicio, "fim": fim}
             
-        df_fin = pd.read_sql_query(text(f"SELECT valor, tipo, COALESCE(data_pagamento, date(data_registro)) as data FROM financeiro {f_fin}"), conn, params=params)
+        df_fin = pd.read_sql_query(text(f"SELECT valor, tipo, status_pagamento, COALESCE(data_pagamento, data_emissao, date(data_registro)) as data FROM financeiro {f_fin}"), conn, params=params)
         df_os = pd.read_sql_query(text(f"SELECT status FROM ordens_servico {f_os}"), conn, params=params)
         
-    faturamento = float(df_fin[df_fin['tipo'] == 'Entrada']['valor'].sum()) if not df_fin.empty else 0
-    despesas = float(df_fin[df_fin['tipo'] == 'Saída']['valor'].sum()) if not df_fin.empty else 0
+    # KPIs Rápidos
+    fat_realizado = float(df_fin[(df_fin['tipo'] == 'Entrada') & (df_fin['status_pagamento'] == 'Pago')]['valor'].sum()) if not df_fin.empty else 0
+    fat_previsto = float(df_fin[(df_fin['tipo'] == 'Entrada') & (df_fin['status_pagamento'] == 'Pendente')]['valor'].sum()) if not df_fin.empty else 0
+    
+    desp_realizado = float(df_fin[(df_fin['tipo'] == 'Saída') & (df_fin['status_pagamento'] == 'Pago')]['valor'].sum()) if not df_fin.empty else 0
+    desp_previsto = float(df_fin[(df_fin['tipo'] == 'Saída') & (df_fin['status_pagamento'] == 'Pendente')]['valor'].sum()) if not df_fin.empty else 0
+    
+    # Processamento do Gráfico de Linhas
+    grafico_fin = {"datas": [], "rec_paga": [], "rec_prev": [], "desp_paga": [], "desp_prev": []}
+    
+    if not df_fin.empty:
+        df_fin['data'] = pd.to_datetime(df_fin['data']).dt.strftime('%Y-%m-%d')
+        # Cria uma chave única: Ex: "Entrada_Pago" ou "Saída_Pendente"
+        df_fin['chave_agrupamento'] = df_fin['tipo'] + '_' + df_fin['status_pagamento']
+        
+        # Tabela Dinâmica
+        grouped = df_fin.groupby(['data', 'chave_agrupamento'])['valor'].sum().unstack(fill_value=0).reset_index()
+        grouped = grouped.sort_values('data')
+        
+        # Garante que todas as colunas existem mesmo se não houver dados naquele momento
+        for col in ['Entrada_Pago', 'Entrada_Pendente', 'Saída_Pago', 'Saída_Pendente']:
+            if col not in grouped.columns:
+                grouped[col] = 0
+                
+        grafico_fin["datas"] = grouped['data'].tolist()
+        grafico_fin["rec_paga"] = grouped['Entrada_Pago'].tolist()
+        grafico_fin["rec_prev"] = grouped['Entrada_Pendente'].tolist()
+        grafico_fin["desp_paga"] = grouped['Saída_Pago'].tolist()
+        grafico_fin["desp_prev"] = grouped['Saída_Pendente'].tolist()
+
+    return {
+        "faturamento_global": fat_realizado,
+        "faturamento_previsto": fat_previsto,
+        "despesas_globais": desp_realizado,
+        "despesas_previstas": desp_previsto,
+        "total_os": len(df_os),
+        "grafico_os": df_os['status'].value_counts().to_dict() if not df_os.empty else {},
+        "grafico_fin": grafico_fin
+    }
     
     # Processamento do Gráfico de Linhas (Eixo X = Data, Eixo Y = Valor)
     grafico_fin = {"datas": [], "receitas": [], "despesas": []}
