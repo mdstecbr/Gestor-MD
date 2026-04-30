@@ -423,14 +423,18 @@
         }
 
         function navegar(pagina) {
-            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active', 'text-white'));
-            document.getElementById(`page-${pagina}`).classList.remove('hidden');
-            if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
-            document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
-            if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
-            if (pagina === 'ponto') loadPontoAdmin();
-        }
+    document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active', 'text-white'));
+    document.getElementById(`page-${pagina}`).classList.remove('hidden');
+    if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
+    document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
+    if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
+    
+    // Gatilhos de carregamento sob demanda (Lazy Loading estratégico)
+    if (pagina === 'ponto') loadPontoAdmin();
+    if (pagina === 'clientes') loadClientes();
+    if (pagina === 'fornecedores') loadFornecedores();
+}
 
         function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -466,11 +470,13 @@
         }
         function getQueryString() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
         function carregarDadosGlobais() { 
-            loadDashboard(); 
-            loadFinanceiro(); 
-            loadOS(); 
-            loadClientesFornecedores();
-        }
+    loadDashboard(); 
+    loadFinanceiro(); 
+    loadOS(); 
+    loadClientesFornecedores();
+    loadClientes();      
+    loadFornecedores();  
+}
 
         // --- LOGIN ---
         async function realizarLogin(e) {
@@ -1101,7 +1107,7 @@ async function loadClientesFornecedores() {
         function abrirNovoFornecedor() { document.getElementById('for-id').value=""; document.getElementById('for-nome').value=""; document.getElementById('for-cnpj').value=""; document.getElementById('for-telefone').value=""; document.getElementById('for-email').value=""; abrirModal('modal-fornecedor'); }
         async function salvarFornecedor(e) { e.preventDefault(); const p = { nome: document.getElementById('for-nome').value, email: document.getElementById('for-email').value, telefone: document.getElementById('for-telefone').value, cnpj_cpf: document.getElementById('for-cnpj').value, categoria: document.getElementById('for-categoria').value }; await fetch(`${API_URL}/fornecedores`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-fornecedor'); loadFornecedores(); loadClientesFornecedores(); }
 
-        
+
     </script>
 </body>
 </html>
