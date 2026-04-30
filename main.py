@@ -335,7 +335,7 @@ def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
 
 # --- ROTAS DO FINANCEIRO (MINI-ERP E CONTABILIDADE) ---
 @app.get("/api/financeiro")
-def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None):
+def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None, usuario_logado: dict = Depends(token_valido)):
     with database.conectar() as conn:
         # Tática de Engenharia: LEFT JOIN para trazer os nomes reais das entidades
         query = """
@@ -362,7 +362,7 @@ def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None):
 
 # --- NOVO LANÇAMENTO FINANCEIRO ---
 @app.post("/api/financeiro")
-def criar_financeiro(req: FinanceiroRequest):
+def criar_financeiro(req: FinanceiroRequest, usuario_logado: dict = Depends(token_valido)):
     dh_br = hora_brasil().strftime("%Y-%m-%d %H:%M:%S")
     with database.conectar() as conn:
         res = conn.execute(text("""
@@ -465,7 +465,7 @@ def gerar_pdf_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None
 
 # --- ROTAS DE ORDENS DE SERVIÇO ---
 @app.get("/api/os")
-def list_os():
+def list_os(usuario_logado: dict = Depends(token_valido)):
     with database.conectar() as conn:
         query = """
             SELECT os.*, u.nome as tecnico 
@@ -478,7 +478,7 @@ def list_os():
 
 # --- CRIAR NOVA OS ---
 @app.post("/api/os")
-def criar_os(req: OSRequest):
+def criar_os(req: OSRequest, usuario_logado: dict = Depends(token_valido)):
     with database.conectar() as conn:
         res = conn.execute(text("""
             INSERT INTO ordens_servico 
@@ -627,7 +627,7 @@ def get_tecnicos():
 
 # --- ROTAS DE DELETE (GENÉRICO) ---
 @app.delete("/api/{rota}/{id}")
-def delete_item(rota: str, id: int):
+def delete_item(rota: str, id: int, usuario_logado: dict = Depends(token_valido)):
     tabela = "ordens_servico" if rota == "os" else "usuarios" if rota == "usuarios" else "financeiro"
     with database.conectar() as conn:
         conn.execute(text(f"DELETE FROM {tabela} WHERE id = :id"), {"id": id})
