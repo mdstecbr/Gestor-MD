@@ -14,6 +14,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from fpdf import FPDF
 import tempfile
+from fastapi.responses import JSONResponse
 
 # --- PROTEÇÃO ANTI-CRASH: Importação Segura do OneDrive ---
 try:
@@ -393,19 +394,29 @@ def criar_os(req: OSRequest):
 # --- EDITAR OS EXISTENTE ---
 @app.put("/api/os/{id}")
 def atualizar_os(id: int, req: OSRequest):
-    with database.conectar() as conn:
-        conn.execute(text("""
-            UPDATE ordens_servico SET 
-                empresa=:e, numero_os=:n, cliente=:c, id_cliente=:idc, endereco=:end, plataforma=:p, 
-                servico_descricao=:sd, orientacoes_admin=:oa, id_tecnico=:it, data_programada=:dp, status=:st
-            WHERE id=:id
-        """), {
-            "e": req.empresa, "n": req.numero_os, "c": req.cliente, "idc": req.id_cliente,
-            "end": req.endereco, "p": req.plataforma, "sd": req.servico_descricao, 
-            "oa": req.orientacoes_admin, "it": req.id_tecnico, "dp": req.data_programada, "st": req.status, "id": id
-        })
-        conn.commit()
-    return {"status": "ok"}
+    try:
+        # LOG PARA O RENDER: Imprime no console exatamente o que o Python leu do JSON
+        print(f"DEBUG - Payload recebido para OS {id}: {req.model_dump()}")
+        
+        with database.conectar() as conn:
+            conn.execute(text("""
+                UPDATE ordens_servico SET 
+                    empresa=:e, numero_os=:n, cliente=:c, id_cliente=:idc, endereco=:end, plataforma=:p, 
+                    servico_descricao=:sd, orientacoes_admin=:oa, id_tecnico=:it, data_programada=:dp, status=:st
+                WHERE id=:id
+            """), {
+                "e": req.empresa, "n": req.numero_os, "c": req.cliente, "idc": req.id_cliente,
+                "end": req.endereco, "p": req.plataforma, "sd": req.servico_descricao, 
+                "oa": req.orientacoes_admin, "it": req.id_tecnico, "dp": req.data_programada, "st": req.status, "id": id
+            })
+            conn.commit()
+        return {"status": "ok"}
+    
+    except Exception as e:
+        # VISÃO COMERCIAL: Captura a falha exata, loga no servidor e devolve ao frontend
+        erro_detalhado = f"Falha interna no servidor: {str(e)}"
+        print(f"ERRO CRÍTICO - PUT /api/os/{id}: {erro_detalhado}")
+        return JSONResponse(status_code=500, content={"detail": erro_detalhado})
 
 @app.get("/api/minhas-os/{id_tecnico}")
 def list_my_os(id_tecnico: int, inicio: Optional[str] = None, fim: Optional[str] = None):
