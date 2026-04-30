@@ -441,6 +441,7 @@
     </div>
 
     <!-- SCRIPTS CORE -->
+    <!-- SCRIPTS CORE -->
     <script>
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); }); }
 
@@ -451,97 +452,32 @@
         
         let id_usuario_logado = null; let perfil_logado = null;
         let arrayFinanceiro = []; let arrayOS = []; let arrayUsuarios = [];
-        let chartOs = null;
-        let chartFin = null;
+        let chartOs = null; let chartFin = null;
         let dataInicioGlobal = ""; let dataFimGlobal = "";
         let techCurrentWeekStart = new Date();
+        const TEMPO_LIMITE_INATIVIDADE = 20 * 60 * 1000;
 
-        function toggleMenu() {
-            document.getElementById('sidebar-admin').classList.toggle('-translate-x-full');
-            document.getElementById('overlay-menu').classList.toggle('hidden');
-        }
+        // --- INTERCEPTOR DE REQUISIÇÕES (INJETA O TOKEN JWT) ---
+        async function fetchAPI(endpoint, options = {}) {
+            const token = localStorage.getItem('md_token');
+            const headers = { ...options.headers };
 
-        function navegar(pagina) {
-            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active', 'text-white'));
-            document.getElementById(`page-${pagina}`).classList.remove('hidden');
-            if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
-            document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
-            if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
-            
-            // Gatilhos de carregamento sob demanda
-            if (pagina === 'ponto') loadPontoAdmin();
-            if (pagina === 'clientes') loadClientes();
-            if (pagina === 'fornecedores') loadFornecedores();
-        }
-
-        function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function logout() { location.reload(); }
-
-        // --- FILTROS DE DATA ---
-        function mudarPeriodoFiltro() {
-            const val = document.getElementById('filtro-periodo').value;
-            const boxDatas = document.getElementById('filtro-datas');
-            boxDatas.classList.add('hidden');
-            const hoje = new Date();
-
-            if (val === 'tudo') { dataInicioGlobal = ""; dataFimGlobal = ""; }
-            else if (val === 'hoje') { dataInicioGlobal = getStrDate(hoje); dataFimGlobal = getStrDate(hoje); }
-            else if (val === 'semana') {
-                const dia = hoje.getDay() || 7; const i = new Date(hoje); i.setDate(hoje.getDate() - dia + 1); const f = new Date(hoje); f.setDate(hoje.getDate() + (7 - dia));
-                dataInicioGlobal = getStrDate(i); dataFimGlobal = getStrDate(f);
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
             }
-            else if (val === 'mes') {
-                const i = new Date(hoje.getFullYear(), hoje.getMonth(), 1); const f = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-                dataInicioGlobal = getStrDate(i); dataFimGlobal = getStrDate(f);
-            }
-            else if (val === 'custom') { boxDatas.classList.remove('hidden'); return; }
-            aplicarFiltroData();
-        }
+            if (token) { headers['Authorization'] = `Bearer ${token}`; }
 
-        function aplicarFiltroData() {
-            if (document.getElementById('filtro-periodo').value === 'custom') {
-                dataInicioGlobal = document.getElementById('filtro-inicio').value;
-                dataFimGlobal = document.getElementById('filtro-fim').value;
-            }
-            carregarDadosGlobais();
-        }
-        
-        function getQueryString() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
-        
-        function carregarDadosGlobais() { 
-            loadDashboard(); 
-            loadFinanceiro(); 
-            loadOS(); 
-            loadClientesFornecedores();
-            loadClientes();      
-            loadFornecedores();  
-        }
+            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
 
-        // --- MOTOR DE EXCLUSÃO GENÉRICO ---
-        async function deletarItem(rota, id) {
-            if(!confirm("⚠️ ATENÇÃO: Esta ação é irreversível. Tem certeza que deseja apagar este registro permanentemente?")) return;
-            
-            try {
-                const res = await fetch(`${API_URL}/${rota}/${id}`, { method: 'DELETE' });
-                if(res.ok) {
-                    if(rota === 'os') loadOS();
-                    else if(rota === 'financeiro') { loadFinanceiro(); loadDashboard(); }
-                    else if(rota === 'usuarios') loadEquipe();
-                    else if(rota === 'clientes') { loadClientes(); loadClientesFornecedores(); }
-                    else if(rota === 'fornecedores') { loadFornecedores(); loadClientesFornecedores(); }
-                } else {
-                    alert("Erro interno ao tentar excluir o registro.");
-                }
-            } catch(e) {
-                alert("Erro de comunicação com o servidor.");
+            if (response.status === 401 && endpoint !== '/login') {
+                alert("Sessão expirada por segurança. Faça login novamente.");
+                logout();
+                throw new Error("Sessão Inválida");
             }
+            return response;
         }
 
         // --- GESTÃO DE SESSÃO E LOGIN ---
-        const TEMPO_LIMITE_INATIVIDADE = 20 * 60 * 1000; // 20 minutos em milissegundos
-
         function iniciarInterface(user) {
             id_usuario_logado = user.id; 
             perfil_logado = user.perfil;
@@ -551,7 +487,6 @@
                 document.getElementById('admin-screen').classList.remove('hidden');
                 document.getElementById('admin-name').innerText = user.nome;
                 document.getElementById('admin-perfil-label').innerText = perfil_logado;
-                
                 if(perfil_logado === 'Contador') {
                     document.getElementById('nav-os').classList.add('hidden');
                     document.getElementById('nav-equipe').classList.add('hidden');
@@ -566,321 +501,138 @@
             }
         }
 
-        // --- INTERCEPTOR DE REQUISIÇÕES (INJETA O TOKEN JWT) ---
-        async function fetchAPI(endpoint, options = {}) {
-            const token = localStorage.getItem('md_token');
-            const headers = { ...options.headers };
-
-            // Se for JSON e não for FormData, adiciona o Content-Type
-            if (!(options.body instanceof FormData)) {
-                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
-            }
-
-            // Injeta o crachá de acesso se existir
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-
-            // Se o backend disser "Token Expirado ou Inválido" (Erro 401), expulsa o usuário
-            if (response.status === 401 && endpoint !== '/login') {
-                alert("Sessão expirada por segurança. Faça login novamente.");
-                logout();
-                throw new Error("Sessão Inválida");
-            }
-
-            return response;
-        }
-        
         async function realizarLogin(e) {
             e.preventDefault();
             try {
-                const res = await fetch(`${API_URL}/login`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ usuario: username.value, senha: password.value }) 
-                });
-                
+                const res = await fetch(`${API_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario: username.value, senha: password.value }) });
                 if (res.ok) {
                     const user = await res.json();
-                    
-                    // GRAVA O TOKEN E A SESSÃO
                     localStorage.setItem('md_session', JSON.stringify(user));
-                    localStorage.setItem('md_token', user.access_token); // NOVO
+                    localStorage.setItem('md_token', user.access_token);
                     localStorage.setItem('md_last_activity', Date.now().toString());
-                    
                     iniciarInterface(user);
-                } else {
-                    document.getElementById('login-error').classList.remove('hidden');
-                }
+                } else document.getElementById('login-error').classList.remove('hidden');
             } catch (err) { alert("Servidor offline!"); }
         }
-        
+
         function logout() { 
-            localStorage.removeItem('md_session');
-            localStorage.removeItem('md_token'); // LIMPA O TOKEN
-            localStorage.removeItem('md_last_activity');
+            localStorage.removeItem('md_session'); localStorage.removeItem('md_token'); localStorage.removeItem('md_last_activity');
             location.reload(); 
         }
 
-        function logout() { 
-            localStorage.removeItem('md_session');
-            localStorage.removeItem('md_last_activity');
-            location.reload(); 
-        }
+        function resetarTempoOcioso() { if(id_usuario_logado) { localStorage.setItem('md_last_activity', Date.now().toString()); } }
+        ['mousemove', 'keypress', 'click', 'scroll', 'touchstart'].forEach(evt => window.addEventListener(evt, resetarTempoOcioso));
 
-        // --- WATCHDOG: RASTREAMENTO DE INATIVIDADE E RESTAURAÇÃO (F5) ---
-        
-        function resetarTempoOcioso() {
-            // Só atualiza o relógio se tiver alguém logado
-            if(id_usuario_logado) {
-                localStorage.setItem('md_last_activity', Date.now().toString());
-            }
-        }
-
-        // Fica de olho em qualquer movimento que o usuário fizer na tela
-        window.addEventListener('mousemove', resetarTempoOcioso);
-        window.addEventListener('keypress', resetarTempoOcioso);
-        window.addEventListener('click', resetarTempoOcioso);
-        window.addEventListener('scroll', resetarTempoOcioso);
-        window.addEventListener('touchstart', resetarTempoOcioso); // Para celulares
-
-        // Rotina que verifica a inatividade a cada 1 minuto (60000 ms)
         setInterval(() => {
             if(id_usuario_logado) {
                 const ultimaAtividade = parseInt(localStorage.getItem('md_last_activity') || '0');
                 if(Date.now() - ultimaAtividade > TEMPO_LIMITE_INATIVIDADE) {
-                    alert("⚠️ Sua sessão expirou por inatividade (20 minutos) por motivos de segurança.");
-                    logout();
+                    alert("⚠️ Sua sessão expirou por inatividade."); logout();
                 }
             }
         }, 60000);
 
-        // Verifica se já existe um login válido ao carregar a página (O F5)
         window.addEventListener('DOMContentLoaded', () => {
-            const sessionData = localStorage.getItem('md_session');
-            const lastActive = localStorage.getItem('md_last_activity');
-            
+            const sessionData = localStorage.getItem('md_session'); const lastActive = localStorage.getItem('md_last_activity');
             if(sessionData && lastActive) {
-                // Checa se o F5 não foi dado DEPOIS que a sessão já tinha vencido
-                if(Date.now() - parseInt(lastActive) < TEMPO_LIMITE_INATIVIDADE) {
-                    const user = JSON.parse(sessionData);
-                    iniciarInterface(user);
-                } else {
-                    // Se venceu, limpa a sujeira silenciosamente
-                    localStorage.removeItem('md_session');
-                    localStorage.removeItem('md_last_activity');
-                }
+                if(Date.now() - parseInt(lastActive) < TEMPO_LIMITE_INATIVIDADE) { iniciarInterface(JSON.parse(sessionData)); } 
+                else { localStorage.removeItem('md_session'); localStorage.removeItem('md_last_activity'); }
             }
         });
 
-
-        // --- PONTO (GPS) ---
-        async function atualizarStatusPontoUI() {
-            const res = await fetch(`${API_URL}/ponto/status/${id_usuario_logado}`); const data = await res.json();
-            const btn = document.getElementById('btn-ponto'); const txt = document.getElementById('txt-ponto-status');
-            if (data.ultimo_registro === 'Entrada') {
-                txt.innerText = "EM SERVIÇO"; txt.className = "text-emerald-400 font-black";
-                btn.innerText = "ENCERRAR DIA"; btn.className = "bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black text-xs transition";
-            } else {
-                txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black";
-                btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition";
-            }
+        // --- NAVEGAÇÃO E UI ---
+        function toggleMenu() {
+            document.getElementById('sidebar-admin').classList.toggle('-translate-x-full');
+            document.getElementById('overlay-menu').classList.toggle('hidden');
         }
 
-        function registrarPonto() {
-            const tipo = (document.getElementById('txt-ponto-status').innerText === "EM SERVIÇO") ? "Saída" : "Entrada";
-            if (!confirm(`Registar ${tipo}?`)) return;
-
-            let is_he = "Não";
-            let motivo_he = "";
-            const hj = new Date();
-            const diaSemana = hj.getDay(); 
-            const hora = hj.getHours();
-            const diaMes = String(hj.getDate()).padStart(2, '0') + '/' + String(hj.getMonth() + 1).padStart(2, '0');
-
-            const feriados = ["01/01", "21/04", "01/05", "07/09", "12/10", "02/11", "15/11", "25/12"];
-            const isFeriado = feriados.includes(diaMes);
-
-            if (diaSemana === 0 || diaSemana === 6 || isFeriado || hora < 8 || hora >= 17) {
-                const resp = prompt(`Você está registrando ponto fora do horário padrão ou em um feriado.\n\nIsto é uma Hora Extra (HE)?\nSe SIM, digite o motivo abaixo.\nSe NÃO, apenas clique em OK deixando em branco:`);
-                if (resp && resp.trim() !== "") {
-                    is_he = "Sim";
-                    motivo_he = resp.trim();
-                }
-            }
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    async (pos) => { await enviarPonto(tipo, pos.coords.latitude, pos.coords.longitude, is_he, motivo_he); }, 
-                    async () => { await enviarPonto(tipo, null, null, is_he, motivo_he); },
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
-            } else enviarPonto(tipo, null, null, is_he, motivo_he);
+        function navegar(pagina) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active', 'text-white'));
+            document.getElementById(`page-${pagina}`).classList.remove('hidden');
+            if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
+            document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
+            if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
+            
+            if (pagina === 'ponto') loadPontoAdmin();
+            if (pagina === 'clientes') loadClientes();
+            if (pagina === 'fornecedores') loadFornecedores();
         }
 
-        async function enviarPonto(tipo, lat, lng, is_he, motivo_he) {
-            await fetch(`${API_URL}/ponto`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id_tecnico: id_usuario_logado, tipo: tipo, lat: lat, lng: lng, is_he: is_he, motivo_he: motivo_he }) });
-            alert("Ponto registado!"); atualizarStatusPontoUI();
+        function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- FILTROS DE DATA ---
+        function mudarPeriodoFiltro() {
+            const val = document.getElementById('filtro-periodo').value;
+            const boxDatas = document.getElementById('filtro-datas'); boxDatas.classList.add('hidden');
+            const hoje = new Date();
+            if (val === 'tudo') { dataInicioGlobal = ""; dataFimGlobal = ""; }
+            else if (val === 'hoje') { dataInicioGlobal = getStrDate(hoje); dataFimGlobal = getStrDate(hoje); }
+            else if (val === 'semana') { const dia = hoje.getDay() || 7; const i = new Date(hoje); i.setDate(hoje.getDate() - dia + 1); const f = new Date(hoje); f.setDate(hoje.getDate() + (7 - dia)); dataInicioGlobal = getStrDate(i); dataFimGlobal = getStrDate(f); }
+            else if (val === 'mes') { const i = new Date(hoje.getFullYear(), hoje.getMonth(), 1); const f = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0); dataInicioGlobal = getStrDate(i); dataFimGlobal = getStrDate(f); }
+            else if (val === 'custom') { boxDatas.classList.remove('hidden'); return; }
+            aplicarFiltroData();
         }
 
-        async function loadPontoAdmin() {
-            const res = await fetch(`${API_URL}/ponto/admin`); const data = await res.json();
-            document.getElementById('tb-ponto-admin').innerHTML = data.map(p => `
-                <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 text-white font-bold">${p.tecnico}</td>
-                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td>
-                    <td class="p-4 text-slate-400 text-xs">${new Date(p.data_hora).toLocaleString('pt-BR')}</td>
-                    <td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}" target="_blank" class="text-brand hover:text-blue-400 underline text-xs font-bold"><i class="fa-solid fa-location-dot mr-1"></i>Ver Mapa</a>` : '-'}</td>
-                    <td class="p-4 text-xs">
-                        ${p.is_he === 'Sim' ? `<span class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded font-bold cursor-help" title="Motivo: ${p.motivo_he}">SIM <i class="fa-solid fa-circle-info ml-1"></i></span>` : `<span class="text-slate-600">Não</span>`}
-                    </td>
-                </tr>`).join('');
+        function aplicarFiltroData() {
+            if (document.getElementById('filtro-periodo').value === 'custom') { dataInicioGlobal = document.getElementById('filtro-inicio').value; dataFimGlobal = document.getElementById('filtro-fim').value; }
+            carregarDadosGlobais();
+        }
+        function getQueryString() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
+        function carregarDadosGlobais() { loadDashboard(); loadFinanceiro(); loadOS(); loadClientesFornecedores(); loadClientes(); loadFornecedores(); }
+
+        // --- MOTOR DE EXCLUSÃO ---
+        async function deletarItem(rota, id) {
+            if(!confirm("⚠️ ATENÇÃO: Ação irreversível. Apagar registro?")) return;
+            try {
+                const res = await fetchAPI(`/${rota}/${id}`, { method: 'DELETE' });
+                if(res.ok) {
+                    if(rota === 'os') loadOS(); else if(rota === 'financeiro') { loadFinanceiro(); loadDashboard(); } else if(rota === 'usuarios') loadEquipe(); else if(rota === 'clientes') { loadClientes(); loadClientesFornecedores(); } else if(rota === 'fornecedores') { loadFornecedores(); loadClientesFornecedores(); }
+                } else alert("Erro interno ao excluir.");
+            } catch(e) { console.error(e); }
         }
 
         // --- DASHBOARD ---
         async function loadDashboard() {
-            const res = await fetch(`${API_URL}/dashboard${getQueryString()}`); 
-            const data = await res.json();
-            
-            // Atualiza os Cards (Realizado)
+            const res = await fetchAPI(`/dashboard${getQueryString()}`); const data = await res.json();
             document.getElementById('dash-in').innerText = formatMoeda(data.faturamento_global);
             document.getElementById('dash-out').innerText = formatMoeda(data.despesas_globais);
             document.getElementById('dash-total').innerText = formatMoeda(data.faturamento_global - data.despesas_globais);
             document.getElementById('dash-os').innerText = data.total_os;
+            if(document.getElementById('dash-in-prev')) document.getElementById('dash-in-prev').innerText = formatMoeda(data.faturamento_previsto);
+            if(document.getElementById('dash-out-prev')) document.getElementById('dash-out-prev').innerText = formatMoeda(data.despesas_previstas);
+            if(document.getElementById('dash-total-prev')) document.getElementById('dash-total-prev').innerText = formatMoeda((data.faturamento_global + data.faturamento_previsto) - (data.despesas_globais + data.despesas_previstas));
 
-            // Atualiza os Cards (Previsto)
-            document.getElementById('dash-in-prev').innerText = formatMoeda(data.faturamento_previsto);
-            document.getElementById('dash-out-prev').innerText = formatMoeda(data.despesas_previstas);
-            
-            const saldoFuturo = (data.faturamento_global + data.faturamento_previsto) - (data.despesas_globais + data.despesas_previstas);
-            document.getElementById('dash-total-prev').innerText = formatMoeda(saldoFuturo);
-            
-            // Gráfico de Rosca (OS) - Mantido igual
-            const ctxOs = document.getElementById('chartOS').getContext('2d');
-            if(chartOs) chartOs.destroy();
-            const chavesOS = Object.keys(data.grafico_os);
-            const valoresOS = Object.values(data.grafico_os);
+            const ctxOs = document.getElementById('chartOS').getContext('2d'); if(chartOs) chartOs.destroy();
+            const chavesOS = Object.keys(data.grafico_os); const valoresOS = Object.values(data.grafico_os);
             const labelsOS = chavesOS.map((chave, i) => `${chave} (${valoresOS[i]})`);
             const coresMapa = { 'Pendente': '#f59e0b', 'Em Execução': '#3b82f6', 'Concluído': '#10b981', 'Cancelada': '#ef4444' };
             const coresOS = chavesOS.map(chave => coresMapa[chave] || '#94a3b8');
 
-            chartOs = new Chart(ctxOs, { 
-                type: 'doughnut', 
-                data: { labels: labelsOS, datasets: [{ data: valoresOS, backgroundColor: coresOS, borderWidth: 0, hoverOffset: 6 }] }, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 12, weight: 'bold' }, padding: 20 } } },
-                    onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            document.getElementById('filtro-status-os').value = chavesOS[elements[0].index];
-                            navegar('os'); loadOS();
-                        }
-                    }
-                } 
-            });
+            chartOs = new Chart(ctxOs, { type: 'doughnut', data: { labels: labelsOS, datasets: [{ data: valoresOS, backgroundColor: coresOS, borderWidth: 0, hoverOffset: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 12, weight: 'bold' } } } }, onClick: (event, elements) => { if (elements.length > 0) { document.getElementById('filtro-status-os').value = chavesOS[elements[0].index]; navegar('os'); loadOS(); } } } });
 
-            // NOVO: Gráfico de Linhas (Financeiro) com Realizado vs Previsto
-            const ctxFin = document.getElementById('chartFin').getContext('2d');
-            if(chartFin) chartFin.destroy();
-            
+            const ctxFin = document.getElementById('chartFin').getContext('2d'); if(chartFin) chartFin.destroy();
             const datasFormatadas = data.grafico_fin.datas.map(d => { const [ano, mes, dia] = d.split('-'); return `${dia}/${mes}`; });
 
-            chartFin = new Chart(ctxFin, {
-                type: 'line',
-                data: {
-                    labels: datasFormatadas,
-                    datasets: [
-                        { 
-                            label: 'Receitas (Real)', 
-                            data: data.grafico_fin.rec_paga, 
-                            borderColor: '#10b981', 
-                            backgroundColor: 'rgba(16, 185, 129, 0.2)', 
-                            borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4
-                        },
-                        { 
-                            label: 'Receitas (Previsto)', 
-                            data: data.grafico_fin.rec_prev, 
-                            borderColor: '#34d399', // Verde mais claro
-                            borderDash: [5, 5], // Linha tracejada
-                            borderWidth: 2, tension: 0.3, fill: false, pointRadius: 2
-                        },
-                        { 
-                            label: 'Despesas (Real)', 
-                            data: data.grafico_fin.desp_paga, 
-                            borderColor: '#ef4444', 
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)', 
-                            borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4
-                        },
-                        { 
-                            label: 'Despesas (Previsto)', 
-                            data: data.grafico_fin.desp_prev, 
-                            borderColor: '#f87171', // Vermelho mais claro
-                            borderDash: [5, 5], // Linha tracejada
-                            borderWidth: 2, tension: 0.3, fill: false, pointRadius: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 15 } } },
-                    scales: { 
-                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, 
-                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } 
-                    },
-                    interaction: { mode: 'index', intersect: false } // Melhora a exibição do tooltip
-                }
-            });
+            chartFin = new Chart(ctxFin, { type: 'line', data: { labels: datasFormatadas, datasets: [ { label: 'Receitas (Real)', data: data.grafico_fin.rec_paga, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }, { label: 'Receitas (Previsto)', data: data.grafico_fin.rec_prev, borderColor: '#34d399', borderDash: [5, 5], borderWidth: 2, tension: 0.3, fill: false, pointRadius: 2 }, { label: 'Despesas (Real)', data: data.grafico_fin.desp_paga, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }, { label: 'Despesas (Previsto)', data: data.grafico_fin.desp_prev, borderColor: '#f87171', borderDash: [5, 5], borderWidth: 2, tension: 0.3, fill: false, pointRadius: 2 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } }, interaction: { mode: 'index', intersect: false } } });
         }
 
-        // --- FINANCEIRO (RENDERIZAÇÃO AVANÇADA) ---
+        // --- FINANCEIRO ---
         async function loadFinanceiro() {
-            const res = await fetch(`${API_URL}/financeiro${getQueryString()}`); 
-            arrayFinanceiro = await res.json();
-            
+            const res = await fetchAPI(`/financeiro${getQueryString()}`); arrayFinanceiro = await res.json();
             document.getElementById('tb-financeiro').innerHTML = arrayFinanceiro.map(f => {
-                // 1. Descobrir a Entidade Relacional
-                const entidade = f.tipo === 'Entrada' 
-                    ? (f.nome_cliente || '<span class="text-slate-600 italic">Avulso</span>') 
-                    : (f.nome_fornecedor || '<span class="text-slate-600 italic">Avulso</span>');
-                
-                const iconeEntidade = f.tipo === 'Entrada' 
-                    ? '<i class="fa-solid fa-building-user text-emerald-500 mr-1" title="Cliente"></i>' 
-                    : '<i class="fa-solid fa-truck-fast text-red-500 mr-1" title="Fornecedor"></i>';
-
-                // 2. Formatação Limpa de Datas
-                const dtEmissao = f.data_emissao ? formatData(f.data_emissao) : '-';
-                const dtPgto = f.data_pagamento ? formatData(f.data_pagamento) : '<span class="text-orange-400">Pendente</span>';
-
-                // 3. Montagem da Linha (Template HTML)
+                const entidade = f.tipo === 'Entrada' ? (f.nome_cliente || '<span class="text-slate-600 italic">Avulso</span>') : (f.nome_fornecedor || '<span class="text-slate-600 italic">Avulso</span>');
+                const iconeEntidade = f.tipo === 'Entrada' ? '<i class="fa-solid fa-building-user text-emerald-500 mr-1"></i>' : '<i class="fa-solid fa-truck-fast text-red-500 mr-1"></i>';
+                const dtEmissao = f.data_emissao ? formatData(f.data_emissao) : '-'; const dtPgto = f.data_pagamento ? formatData(f.data_pagamento) : '<span class="text-orange-400">Pendente</span>';
                 return `
                 <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 text-xs text-slate-400">
-                        <div><span class="font-bold text-slate-500 uppercase text-[9px]">Emissão:</span> ${dtEmissao}</div>
-                        <div class="mt-1"><span class="font-bold text-slate-500 uppercase text-[9px]">Pgto:</span> ${dtPgto}</div>
-                    </td>
-                    <td class="p-4 text-white">
-                        <div class="flex items-center">
-                            <p class="font-bold">${f.descricao}</p>
-                            ${f.id_os ? `<span class="ml-2 bg-brand/20 text-brand px-2 py-0.5 rounded text-[10px] font-black tracking-widest border border-brand/30" title="Centro de Custo Vinculado">OS #${f.id_os}</span>` : ''}
-                        </div>
-                        <p class="text-[10px] text-slate-500 mt-1 uppercase font-bold">${f.empresa} &bull; <span class="text-slate-400">${f.categoria || 'Sem categoria'}</span></p>
-                    </td>
-                    <td class="p-4 text-xs text-slate-300 font-medium whitespace-nowrap">
-                        ${iconeEntidade} ${entidade}
-                    </td>
-                    <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">
-                        ${formatMoeda(f.valor)}
-                    </td>
-                    <td class="p-4 text-xs text-slate-400">
-                        <span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span>
-                        <div class="text-[10px] mt-1 text-slate-500 uppercase font-bold">NF: <span class="text-slate-400">${f.status_nf}</span></div>
-                    </td>
-                    <td class="p-4 text-center">
-                        <i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-600'}" title="${f.conciliado==='Sim' ? 'Conciliado' : 'Não Conciliado'}"></i>
-                    </td>
+                    <td class="p-4 text-xs text-slate-400"><div><span class="font-bold text-slate-500 uppercase text-[9px]">Emissão:</span> ${dtEmissao}</div><div class="mt-1"><span class="font-bold text-slate-500 uppercase text-[9px]">Pgto:</span> ${dtPgto}</div></td>
+                    <td class="p-4 text-white"><div class="flex items-center"><p class="font-bold">${f.descricao}</p>${f.id_os ? `<span class="ml-2 bg-brand/20 text-brand px-2 py-0.5 rounded text-[10px] font-black tracking-widest border border-brand/30">OS #${f.id_os}</span>` : ''}</div><p class="text-[10px] text-slate-500 mt-1 uppercase font-bold">${f.empresa} &bull; <span class="text-slate-400">${f.categoria || 'Sem categoria'}</span></p></td>
+                    <td class="p-4 text-xs text-slate-300 font-medium whitespace-nowrap">${iconeEntidade} ${entidade}</td>
+                    <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">${formatMoeda(f.valor)}</td>
+                    <td class="p-4 text-xs text-slate-400"><span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span><div class="text-[10px] mt-1 text-slate-500 uppercase font-bold">NF: <span class="text-slate-400">${f.status_nf}</span></div></td>
+                    <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-600'}"></i></td>
                     <td class="p-4 text-center flex justify-center items-center mt-2 gap-3">
                         ${f.status_pagamento !== 'Pago' ? `<button onclick="marcarComoPago(${f.id})" class="text-slate-400 hover:text-emerald-500 transform hover:scale-110 transition" title="Dar baixa"><i class="fa-solid fa-circle-check text-lg"></i></button>` : ''}
                         <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 transform hover:scale-110 transition" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
@@ -891,358 +643,121 @@
             }).join('');
         }
 
-        function abrirNovaFin() { 
-            document.getElementById('fin-id').value=""; document.getElementById('fin-desc').value=""; document.getElementById('fin-valor').value=""; document.getElementById('fin-id-os').value=""; document.getElementById('fin-conciliado').value="Não"; document.getElementById('fin-arquivos-list').innerHTML="";
-            abrirModal('modal-fin'); 
-        }
+        function abrirNovaFin() { document.getElementById('fin-id').value=""; document.getElementById('fin-desc').value=""; document.getElementById('fin-valor').value=""; document.getElementById('fin-id-os').value=""; document.getElementById('fin-conciliado').value="Não"; document.getElementById('fin-arquivos-list').innerHTML=""; abrirModal('modal-fin'); }
 
-       async function editarFin(id) { 
+        async function editarFin(id) { 
             const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
-            document.getElementById('fin-id').value=f.id; 
-            document.getElementById('fin-empresa').value=f.empresa; 
-            document.getElementById('fin-desc').value=f.descricao; 
-            document.getElementById('fin-valor').value = f.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
-            document.getElementById('fin-tipo').value=f.tipo; 
-            document.getElementById('fin-categoria').value=f.categoria; 
-            
-            // --> NOVO: Carrega os IDs na tela ao editar
-            document.getElementById('fin-cliente').value = f.id_cliente || ""; 
-            document.getElementById('fin-fornecedor').value = f.id_fornecedor || ""; 
-            // Atualiza a exibição das caixas dependendo se é Entrada ou Saída
-            toggleEntidadeFinanceiro();
-
-            document.getElementById('fin-status-pgto').value=f.status_pagamento; 
-            document.getElementById('fin-status-nf').value=f.status_nf; 
-            document.getElementById('fin-data-emissao').value=f.data_emissao||""; 
-            document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; 
-            document.getElementById('fin-id-os').value=f.id_os||""; 
-            document.getElementById('fin-conciliado').value=f.conciliado||"Não";
-            
-            const rArq = await fetch(`${API_URL}/arquivos/comprovantes/${id}`); const dArq = await rArq.json();
-            document.getElementById('fin-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/comprovantes/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-paperclip mr-1"></i>${a}</a>`).join('');
-            abrirModal('modal-fin'); 
+            document.getElementById('fin-id').value=f.id; document.getElementById('fin-empresa').value=f.empresa; document.getElementById('fin-desc').value=f.descricao; document.getElementById('fin-valor').value = f.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); document.getElementById('fin-tipo').value=f.tipo; document.getElementById('fin-categoria').value=f.categoria; document.getElementById('fin-cliente').value = f.id_cliente || ""; document.getElementById('fin-fornecedor').value = f.id_fornecedor || ""; toggleEntidadeFinanceiro(); document.getElementById('fin-status-pgto').value=f.status_pagamento; document.getElementById('fin-status-nf').value=f.status_nf; document.getElementById('fin-data-emissao').value=f.data_emissao||""; document.getElementById('fin-data-pagamento').value=f.data_pagamento||""; document.getElementById('fin-id-os').value=f.id_os||""; document.getElementById('fin-conciliado').value=f.conciliado||"Não";
+            const res = await fetchAPI(`/arquivos/comprovantes/${id}`); const dArq = await res.json();
+            document.getElementById('fin-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/comprovantes/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-paperclip mr-1"></i>${a}</a>`).join(''); abrirModal('modal-fin'); 
         }
 
         async function salvarFinanceiro(e) {
-            e.preventDefault(); const id = document.getElementById('fin-id').value;
-            const valorRaw = document.getElementById('fin-valor').value.replace(/\./g, '').replace(',', '.');
-            
-            // --> NOVO: Captura os IDs preenchidos na tela
-            const selCliente = document.getElementById('fin-cliente').value;
-            const selFornecedor = document.getElementById('fin-fornecedor').value;
-
-            const payload = { 
-                empresa: document.getElementById('fin-empresa').value, 
-                descricao: document.getElementById('fin-desc').value, 
-                valor: parseFloat(valorRaw), 
-                tipo: document.getElementById('fin-tipo').value, 
-                categoria: document.getElementById('fin-categoria').value, 
-                status_pagamento: document.getElementById('fin-status-pgto').value, 
-                status_nf: document.getElementById('fin-status-nf').value, 
-                data_emissao: document.getElementById('fin-data-emissao').value || null, 
-                data_pagamento: document.getElementById('fin-data-pagamento').value || null, 
-                id_os: document.getElementById('fin-id-os').value ? parseInt(document.getElementById('fin-id-os').value) : null, 
-                
-                // --> NOVO: Injeta no Payload
-                id_cliente: selCliente ? parseInt(selCliente) : null,
-                id_fornecedor: selFornecedor ? parseInt(selFornecedor) : null,
-                
-                conciliado: document.getElementById('fin-conciliado').value 
-            };
-            
-            const res = await fetch(id ? `${API_URL}/financeiro/${id}` : `${API_URL}/financeiro`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-            const savedData = await res.json();
-            
+            e.preventDefault(); const id = document.getElementById('fin-id').value; const valorRaw = document.getElementById('fin-valor').value.replace(/\./g, '').replace(',', '.'); const selCliente = document.getElementById('fin-cliente').value; const selFornecedor = document.getElementById('fin-fornecedor').value;
+            const payload = { empresa: document.getElementById('fin-empresa').value, descricao: document.getElementById('fin-desc').value, valor: parseFloat(valorRaw), tipo: document.getElementById('fin-tipo').value, categoria: document.getElementById('fin-categoria').value, status_pagamento: document.getElementById('fin-status-pgto').value, status_nf: document.getElementById('fin-status-nf').value, data_emissao: document.getElementById('fin-data-emissao').value || null, data_pagamento: document.getElementById('fin-data-pagamento').value || null, id_os: document.getElementById('fin-id-os').value ? parseInt(document.getElementById('fin-id-os').value) : null, id_cliente: selCliente ? parseInt(selCliente) : null, id_fornecedor: selFornecedor ? parseInt(selFornecedor) : null, conciliado: document.getElementById('fin-conciliado').value };
+            const res = await fetchAPI(id ? `/financeiro/${id}` : `/financeiro`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) }); const savedData = await res.json();
             const fileInput = document.getElementById('fin-docs');
-            if(fileInput.files.length > 0) {
-                const formData = new FormData(); for(let i=0; i<fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]);
-                await fetch(`${API_URL}/upload/comprovantes/${id ? id : savedData.id}`, { method: 'POST', body: formData });
-            }
+            if(fileInput.files.length > 0) { const formData = new FormData(); for(let i=0; i<fileInput.files.length; i++) formData.append("arquivos", fileInput.files[i]); await fetchAPI(`/upload/comprovantes/${id ? id : savedData.id}`, { method: 'POST', body: formData }); }
             fecharModal('modal-fin'); loadFinanceiro(); loadDashboard();
         }
 
         // --- OS ---
         async function loadOS() {
-            const res = await fetch(`${API_URL}/os`); 
-            arrayOS = await res.json();
-            
-            const filtro = document.getElementById('filtro-status-os') ? document.getElementById('filtro-status-os').value : "";
-            let dadosFiltrados = arrayOS;
-            if (filtro !== "") dadosFiltrados = arrayOS.filter(o => o.status === filtro);
-
+            const res = await fetchAPI(`/os`); arrayOS = await res.json();
+            const filtro = document.getElementById('filtro-status-os') ? document.getElementById('filtro-status-os').value : ""; let dadosFiltrados = arrayOS; if (filtro !== "") dadosFiltrados = arrayOS.filter(o => o.status === filtro);
             document.getElementById('tb-os').innerHTML = dadosFiltrados.map(o => `
                 <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
                     <td class="p-4 text-xs">${formatData(o.data_programada)}</td>
-                    <td class="p-4 text-brand font-bold">${o.numero_os}</td>
-                    <td class="p-4 text-white">${o.cliente}</td>
-                    <td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
+                    <td class="p-4 text-brand font-bold">${o.numero_os}</td><td class="p-4 text-white">${o.cliente}</td><td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
                     <td class="p-4"><span class="text-[10px] uppercase font-bold text-brand">${o.status}</span></td>
-                    <td class="p-4 text-center flex justify-center gap-3">
-                        <button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deletarItem('os', ${o.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
-                    </td>
+                    <td class="p-4 text-center flex justify-center gap-3"><button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="deletarItem('os', ${o.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`).join('');
         }
 
-        function abrirNovaOS() { 
-            document.getElementById('os-id').value=""; 
-            document.getElementById('os-numero').value=""; 
-            document.getElementById('os-cliente').value="";
-            document.getElementById('os-endereco').value=""; 
-            document.getElementById('os-plataforma').value=""; 
-            document.getElementById('os-desc').value=""; 
-            document.getElementById('os-orientacoes').value="";
-            document.getElementById('os-arquivos-list').innerHTML=""; 
-            abrirModal('modal-os'); 
-        }
+        function abrirNovaOS() { document.getElementById('os-id').value=""; document.getElementById('os-numero').value=""; document.getElementById('os-cliente').value=""; document.getElementById('os-endereco').value=""; document.getElementById('os-plataforma').value=""; document.getElementById('os-desc').value=""; document.getElementById('os-orientacoes').value=""; document.getElementById('os-arquivos-list').innerHTML=""; abrirModal('modal-os'); }
         
         async function editarOS(id) {
             const o = arrayOS.find(x => x.id == id); if(!o) return;
-            document.getElementById('os-id').value=o.id; 
-            document.getElementById('os-empresa').value=o.empresa; 
-            document.getElementById('os-numero').value=o.numero_os; 
-            document.getElementById('os-cliente').value=o.id_cliente || ""; 
-            document.getElementById('os-endereco').value=o.endereco; 
-            document.getElementById('os-plataforma').value=o.plataforma; 
-            document.getElementById('os-desc').value=o.servico_descricao; 
-            document.getElementById('os-orientacoes').value=o.orientacoes_admin || ""; 
-            document.getElementById('os-tecnico').value=o.id_tecnico; 
-            document.getElementById('os-status').value=o.status; 
-            if(o.data_programada) document.getElementById('os-data').value = o.data_programada;
-            
-            const rArq = await fetch(`${API_URL}/arquivos/documentos/${id}`); const dArq = await rArq.json();
-            document.getElementById('os-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/documentos/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-file text-red-500 mr-1"></i>${a}</a>`).join('');
-            abrirModal('modal-os');
+            document.getElementById('os-id').value=o.id; document.getElementById('os-empresa').value=o.empresa; document.getElementById('os-numero').value=o.numero_os; document.getElementById('os-cliente').value=o.id_cliente || ""; document.getElementById('os-endereco').value=o.endereco; document.getElementById('os-plataforma').value=o.plataforma; document.getElementById('os-desc').value=o.servico_descricao; document.getElementById('os-orientacoes').value=o.orientacoes_admin || ""; document.getElementById('os-tecnico').value=o.id_tecnico; document.getElementById('os-status').value=o.status; if(o.data_programada) document.getElementById('os-data').value = o.data_programada;
+            const res = await fetchAPI(`/arquivos/documentos/${id}`); const dArq = await res.json();
+            document.getElementById('os-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/documentos/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-file text-red-500 mr-1"></i>${a}</a>`).join(''); abrirModal('modal-os');
         }
 
         async function salvarOS(e) {
-            e.preventDefault(); 
-            const id = document.getElementById('os-id').value;
-            const selectCliente = document.getElementById('os-cliente');
-            const idClienteVal = selectCliente.value ? parseInt(selectCliente.value) : null;
-            const nomeCliente = selectCliente.options[selectCliente.selectedIndex]?.text || "Avulso";
-
-            const payload = { 
-                empresa: document.getElementById('os-empresa').value, 
-                numero_os: document.getElementById('os-numero').value, 
-                cliente: nomeCliente, 
-                id_cliente: idClienteVal, 
-                endereco: document.getElementById('os-endereco').value, 
-                plataforma: document.getElementById('os-plataforma').value, 
-                servico_descricao: document.getElementById('os-desc').value, 
-                orientacoes_admin: document.getElementById('os-orientacoes').value,
-                id_tecnico: parseInt(document.getElementById('os-tecnico').value), 
-                data_programada: document.getElementById('os-data').value, 
-                status: document.getElementById('os-status').value 
-            };
-
+            e.preventDefault(); const id = document.getElementById('os-id').value; const selectCliente = document.getElementById('os-cliente'); const idClienteVal = selectCliente.value ? parseInt(selectCliente.value) : null; const nomeCliente = selectCliente.options[selectCliente.selectedIndex]?.text || "Avulso";
+            const payload = { empresa: document.getElementById('os-empresa').value, numero_os: document.getElementById('os-numero').value, cliente: nomeCliente, id_cliente: idClienteVal, endereco: document.getElementById('os-endereco').value, plataforma: document.getElementById('os-plataforma').value, servico_descricao: document.getElementById('os-desc').value, orientacoes_admin: document.getElementById('os-orientacoes').value, id_tecnico: parseInt(document.getElementById('os-tecnico').value), data_programada: document.getElementById('os-data').value, status: document.getElementById('os-status').value };
             try {
-                const res = await fetch(id ? `${API_URL}/os/${id}` : `${API_URL}/os`, { 
-                    method: id ? 'PUT' : 'POST', 
-                    headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify(payload) 
-                }); 
-                
-                if (!res.ok) {
-                    const error = await res.json();
-                    alert("Erro ao salvar: " + JSON.stringify(error));
-                    return;
-                }
-                
-                const data = await res.json();
+                const res = await fetchAPI(id ? `/os/${id}` : `/os`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) }); const data = await res.json();
                 const fileInput = document.getElementById('os-docs');
-                if(fileInput.files.length > 0) { 
-                    const fData = new FormData(); 
-                    for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); 
-                    await fetch(`${API_URL}/upload/documentos/${id ? id : data.id}`, { method: 'POST', body: fData }); 
-                }
-                
+                if(fileInput.files.length > 0) { const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetchAPI(`/upload/documentos/${id ? id : data.id}`, { method: 'POST', body: fData }); }
                 fecharModal('modal-os'); loadOS();
-            } catch(err) {
-                console.error("Falha na comunicação: ", err);
-                alert("Erro fatal ao salvar OS. Verifique a conexão.");
-            }
+            } catch(err) { console.error(err); alert("Erro ao salvar OS."); }
         }
 
-        // --- USUÁRIOS ---
+        // --- USUÁRIOS E PONTO (ADMIN E TECH) ---
         async function loadEquipe() {
-            const res = await fetch(`${API_URL}/usuarios`); arrayUsuarios = await res.json();
-            document.getElementById('tb-equipe').innerHTML = arrayUsuarios.map(u => `
-                <tr class="border-b border-slate-700/50">
-                    <td class="p-4 text-white">${u.nome}</td><td class="p-4 text-slate-400">${u.usuario}</td>
-                    <td class="p-4 text-[10px] uppercase font-bold text-brand">${u.perfil}</td>
-                    <td class="p-4 text-center flex justify-center gap-3">
-                        <button onclick="editarUser(${u.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deletarItem('usuarios', ${u.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`).join('');
+            const res = await fetchAPI(`/usuarios`); arrayUsuarios = await res.json();
+            document.getElementById('tb-equipe').innerHTML = arrayUsuarios.map(u => `<tr class="border-b border-slate-700/50"><td class="p-4 text-white">${u.nome}</td><td class="p-4 text-slate-400">${u.usuario}</td><td class="p-4 text-[10px] uppercase font-bold text-brand">${u.perfil}</td><td class="p-4 text-center flex justify-center gap-3"><button onclick="editarUser(${u.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="deletarItem('usuarios', ${u.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
         }
         function abrirNovoUser() { document.getElementById('usr-id').value=""; document.getElementById('usr-nome').value=""; document.getElementById('usr-email').value=""; document.getElementById('usr-login').value=""; document.getElementById('usr-senha').value=""; document.getElementById('senha-hint').classList.add('hidden'); document.getElementById('login-field-container').classList.remove('hidden'); abrirModal('modal-user'); }
         function editarUser(id) { const u = arrayUsuarios.find(x=>x.id==id); document.getElementById('usr-id').value=u.id; document.getElementById('usr-nome').value=u.nome; document.getElementById('usr-email').value=u.email; document.getElementById('usr-login').value=u.usuario; document.getElementById('usr-perfil').value=u.perfil; document.getElementById('usr-senha').value=""; document.getElementById('senha-hint').classList.remove('hidden'); document.getElementById('login-field-container').classList.add('hidden'); abrirModal('modal-user'); }
-        async function salvarUsuario(e) { e.preventDefault(); const id = document.getElementById('usr-id').value; const p = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value }; try { const res = await fetch(id ? `${API_URL}/usuarios/${id}` : `${API_URL}/usuarios`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); if(!res.ok) { const err = await res.json(); alert(`ERRO: ${err.detail}`); return; } fecharModal('modal-user'); loadEquipe(); } catch(err) { alert("Erro de comunicação."); } }
-        async function carregarDropdownTecnicos() { const res = await fetch(`${API_URL}/tecnicos`); const data = await res.json(); document.getElementById('os-tecnico').innerHTML = data.map(t => `<option value="${t.id}">${t.nome}</option>`).join(''); }
+        async function salvarUsuario(e) { e.preventDefault(); const id = document.getElementById('usr-id').value; const p = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value }; try { await fetchAPI(id ? `/usuarios/${id}` : `/usuarios`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(p) }); fecharModal('modal-user'); loadEquipe(); } catch(err) { alert("Erro de comunicação."); } }
+        async function carregarDropdownTecnicos() { const res = await fetchAPI(`/tecnicos`); const data = await res.json(); document.getElementById('os-tecnico').innerHTML = data.map(t => `<option value="${t.id}">${t.nome}</option>`).join(''); }
 
-        // --- PORTAL TÉCNICO ---
+        async function atualizarStatusPontoUI() {
+            const res = await fetchAPI(`/ponto/status/${id_usuario_logado}`); const data = await res.json();
+            const btn = document.getElementById('btn-ponto'); const txt = document.getElementById('txt-ponto-status');
+            if (data.ultimo_registro === 'Entrada') { txt.innerText = "EM SERVIÇO"; txt.className = "text-emerald-400 font-black"; btn.innerText = "ENCERRAR DIA"; btn.className = "bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; } 
+            else { txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black"; btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; }
+        }
+
+        async function enviarPonto(tipo, lat, lng, is_he, motivo_he) { await fetchAPI(`/ponto`, { method: 'POST', body: JSON.stringify({ id_tecnico: id_usuario_logado, tipo: tipo, lat: lat, lng: lng, is_he: is_he, motivo_he: motivo_he }) }); alert("Ponto registado!"); atualizarStatusPontoUI(); }
+
+        async function loadPontoAdmin() {
+            const res = await fetchAPI(`/ponto/admin`); const data = await res.json();
+            document.getElementById('tb-ponto-admin').innerHTML = data.map(p => `<tr class="hover:bg-slate-800 transition border-b border-slate-700/50"><td class="p-4 text-white font-bold">${p.tecnico}</td><td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td><td class="p-4 text-slate-400 text-xs">${new Date(p.data_hora).toLocaleString('pt-BR')}</td><td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}" target="_blank" class="text-brand hover:text-blue-400 underline text-xs font-bold"><i class="fa-solid fa-location-dot mr-1"></i>Ver Mapa</a>` : '-'}</td><td class="p-4 text-xs">${p.is_he === 'Sim' ? `<span class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded font-bold cursor-help" title="Motivo: ${p.motivo_he}">SIM <i class="fa-solid fa-circle-info ml-1"></i></span>` : `<span class="text-slate-600">Não</span>`}</td></tr>`).join('');
+        }
+
         function navegarSemanaTech(dir) { techCurrentWeekStart.setDate(techCurrentWeekStart.getDate() + (dir * 7)); loadTechWeekView(); }
         async function loadTechWeekView() {
             let iStr = getStrDate(techCurrentWeekStart); let eW = new Date(techCurrentWeekStart); eW.setDate(eW.getDate() + 6); let fStr = getStrDate(eW);
             document.getElementById('tech-week-label').innerText = `${techCurrentWeekStart.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} a ${eW.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}`;
-            const res = await fetch(`${API_URL}/minhas-os/${id_usuario_logado}?inicio=${iStr}&fim=${fStr}`); const data = await res.json();
+            const res = await fetchAPI(`/minhas-os/${id_usuario_logado}?inicio=${iStr}&fim=${fStr}`); const data = await res.json();
             const dias = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM']; let calHtml = ''; let hjReal = getStrDate(new Date());
             for(let i=0; i<7; i++) { let d = new Date(techCurrentWeekStart); d.setDate(d.getDate() + i); let dtStr = getStrDate(d); let isHj = dtStr === hjReal; let hasOS = data.some(o => o.data_programada === dtStr); calHtml += `<div class="flex flex-col items-center"><span class="text-[10px] font-bold ${isHj?'text-brand':'text-slate-600'} mb-1">${dias[i]}</span><div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${isHj?'bg-brand text-white':'text-slate-500'}">${d.getDate()}</div><div class="w-1.5 h-1.5 mt-1 rounded-full ${hasOS?'bg-brand':''}"></div></div>`; }
-            document.getElementById('tech-calendar-days').innerHTML = calHtml;
-            const list = document.getElementById('tech-task-list'); if(data.length === 0) { list.innerHTML = '<div class="text-center text-slate-600 font-bold p-10 uppercase">Sem tarefas</div>'; return; }
+            document.getElementById('tech-calendar-days').innerHTML = calHtml; const list = document.getElementById('tech-task-list'); if(data.length === 0) { list.innerHTML = '<div class="text-center text-slate-600 font-bold p-10 uppercase">Sem tarefas</div>'; return; }
             let agrupado = {}; data.forEach(o => { if(!agrupado[o.data_programada]) agrupado[o.data_programada] = []; agrupado[o.data_programada].push(o); });
             let hC = '';
             for(let d of Object.keys(agrupado).sort()) {
                 hC += `<h3 class="text-xs font-black text-brand uppercase mt-6 mb-2">${d === hjReal ? "HOJE" : formatData(d)}</h3>`;
-                for(let o of agrupado[d]) {
-                    hC += `
-                    <div class="bg-cardbg border border-slate-800 rounded-xl mb-4 shadow-lg overflow-hidden">
-                        <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-slate-800/50 transition active:bg-slate-800" onclick="toggleOS(${o.id})">
-                            <div>
-                                <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-white border border-slate-700">OS #${o.numero_os}</span>
-                                <h4 class="text-white font-bold mt-2 text-sm">${o.cliente}</h4>
-                                <p class="text-xs text-brand mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${o.endereco}</p>
-                            </div>
-                            <div class="text-slate-400 bg-slate-900/50 w-8 h-8 rounded-full flex items-center justify-center">
-                                <i id="icone-os-${o.id}" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
-                            </div>
-                        </div>
-                        
-                        <div id="corpo-os-${o.id}" class="hidden border-t border-slate-800 bg-slate-900/30 p-4">
-                            <p class="text-xs text-slate-400 bg-slate-800/50 p-3 rounded border border-slate-700 mb-4">${o.servico_descricao}</p>
-                            ${o.orientacoes_admin ? `
-                            <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4 shadow-inner">
-                                <p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Orientações da Base</p>
-                                <p class="text-xs text-slate-300 font-medium">${o.orientacoes_admin}</p>
-                            </div>` : ''}
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Relatório Técnico</label>
-                            <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded-lg p-3 text-xs mb-3 border border-slate-700 focus:border-brand outline-none transition" rows="3" placeholder="Descreva o que foi feito...">${o.relatorio_tecnico || ''}</textarea>
-                            
-                            <div class="flex gap-2 mb-4">
-                                <select id="status-${o.id}" class="w-1/2 bg-slate-800 text-white rounded-lg p-3 text-sm font-bold border border-slate-700 outline-none">
-                                    <option value="Pendente" ${o.status==='Pendente'?'selected':''}>Pendente</option>
-                                    <option value="Em Execução" ${o.status==='Em Execução'?'selected':''}>Em Execução</option>
-                                    <option value="Concluído" ${o.status==='Concluído'?'selected':''}>Concluído</option>
-                                </select>
-                                <button onclick="atualizarStatusOS(${o.id})" class="w-1/2 bg-brand hover:bg-blue-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-lg"><i class="fa-solid fa-floppy-disk mr-1"></i> SALVAR</button>
-                            </div>
-                            
-                            <div class="mt-2 pt-4 border-t border-slate-800">
-                                <label class="block text-[10px] font-bold text-emerald-500 mb-2 uppercase"><i class="fa-solid fa-camera mr-1"></i> Anexar Fotos / Evidências</label>
-                                <input type="file" id="evidencias-${o.id}" multiple class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-slate-800 file:border-0 file:text-white hover:file:bg-slate-700 mb-3 transition cursor-pointer">
-                                <button onclick="enviarEvidencias(${o.id})" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-lg"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> ENVIAR FOTOS</button>
-                            </div>
-                        </div>
-                    </div>`;
-                }
+                for(let o of agrupado[d]) { hC += `<div class="bg-cardbg border border-slate-800 rounded-xl mb-4 shadow-lg overflow-hidden"><div class="p-4 cursor-pointer flex justify-between items-center hover:bg-slate-800/50 transition active:bg-slate-800" onclick="toggleOS(${o.id})"><div><span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-white border border-slate-700">OS #${o.numero_os}</span><h4 class="text-white font-bold mt-2 text-sm">${o.cliente}</h4><p class="text-xs text-brand mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${o.endereco}</p></div><div class="text-slate-400 bg-slate-900/50 w-8 h-8 rounded-full flex items-center justify-center"><i id="icone-os-${o.id}" class="fa-solid fa-chevron-down transition-transform duration-300"></i></div></div><div id="corpo-os-${o.id}" class="hidden border-t border-slate-800 bg-slate-900/30 p-4"><p class="text-xs text-slate-400 bg-slate-800/50 p-3 rounded border border-slate-700 mb-4">${o.servico_descricao}</p>${o.orientacoes_admin ? `<div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4 shadow-inner"><p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Orientações da Base</p><p class="text-xs text-slate-300 font-medium">${o.orientacoes_admin}</p></div>` : ''}<label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Relatório Técnico</label><textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded-lg p-3 text-xs mb-3 border border-slate-700 focus:border-brand outline-none transition" rows="3" placeholder="Descreva o que foi feito...">${o.relatorio_tecnico || ''}</textarea><div class="flex gap-2 mb-4"><select id="status-${o.id}" class="w-1/2 bg-slate-800 text-white rounded-lg p-3 text-sm font-bold border border-slate-700 outline-none"><option value="Pendente" ${o.status==='Pendente'?'selected':''}>Pendente</option><option value="Em Execução" ${o.status==='Em Execução'?'selected':''}>Em Execução</option><option value="Concluído" ${o.status==='Concluído'?'selected':''}>Concluído</option></select><button onclick="atualizarStatusOS(${o.id})" class="w-1/2 bg-brand hover:bg-blue-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-lg"><i class="fa-solid fa-floppy-disk mr-1"></i> SALVAR</button></div><div class="mt-2 pt-4 border-t border-slate-800"><label class="block text-[10px] font-bold text-emerald-500 mb-2 uppercase"><i class="fa-solid fa-camera mr-1"></i> Anexar Fotos / Evidências</label><input type="file" id="evidencias-${o.id}" multiple class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-slate-800 file:border-0 file:text-white hover:file:bg-slate-700 mb-3 transition cursor-pointer"><button onclick="enviarEvidencias(${o.id})" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg text-xs transition shadow-lg"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> ENVIAR FOTOS</button></div></div></div>`; }
             }
             list.innerHTML = hC;
         }
-        async function atualizarStatusOS(id) { await fetch(`${API_URL}/os/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: document.getElementById(`status-${id}`).value, relatorio_tecnico: document.getElementById(`relatorio-${id}`).value }) }); alert("Salvo!"); loadTechWeekView(); }
-        async function enviarEvidencias(id) { const fileInput = document.getElementById(`evidencias-${id}`); if(fileInput.files.length === 0) return alert("Selecione fotos!"); const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/upload/evidencias/${id}`, { method: 'POST', body: fData }); alert("Fotos enviadas!"); fileInput.value = ""; }
+        async function atualizarStatusOS(id) { await fetchAPI(`/os/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: document.getElementById(`status-${id}`).value, relatorio_tecnico: document.getElementById(`relatorio-${id}`).value }) }); alert("Salvo!"); loadTechWeekView(); }
+        async function enviarEvidencias(id) { const fileInput = document.getElementById(`evidencias-${id}`); if(fileInput.files.length === 0) return alert("Selecione fotos!"); const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetchAPI(`/upload/evidencias/${id}`, { method: 'POST', body: fData }); alert("Fotos enviadas!"); fileInput.value = ""; }
 
-        function exportarFechamento() { window.open(`${API_URL}/relatorio/financeiro/pdf${getQueryString()}`, '_blank'); }
+        function exportarFechamento() { window.open(`${API_URL}/relatorio/financeiro/pdf${getQueryString()}&token=${localStorage.getItem('md_token')}`, '_blank'); }
 
-        async function previewComprovante(id) {
-            try {
-                const res = await fetch(`${API_URL}/arquivos/comprovantes/${id}`);
-                const data = await res.json();
-                if (data.arquivos && data.arquivos.length > 0) window.open(`${API_URL}/download/comprovantes/${id}/${data.arquivos[0]}`, '_blank');
-                else alert("Nenhum comprovante ou NF anexado a este lançamento.");
-            } catch (err) { alert("Erro ao buscar o comprovante."); }
-        }
+        async function previewComprovante(id) { try { const res = await fetchAPI(`/arquivos/comprovantes/${id}`); const data = await res.json(); if (data.arquivos && data.arquivos.length > 0) window.open(`${API_URL}/download/comprovantes/${id}/${data.arquivos[0]}`, '_blank'); else alert("Nenhum arquivo anexado."); } catch (err) { alert("Erro ao buscar arquivo."); } }
 
-        function toggleOS(id) {
-            const corpo = document.getElementById(`corpo-os-${id}`);
-            const icone = document.getElementById(`icone-os-${id}`);
-            if (corpo.classList.contains('hidden')) { corpo.classList.remove('hidden'); icone.classList.add('rotate-180'); } 
-            else { corpo.classList.add('hidden'); icone.classList.remove('rotate-180'); }
-        }
+        function toggleOS(id) { const corpo = document.getElementById(`corpo-os-${id}`); const icone = document.getElementById(`icone-os-${id}`); if (corpo.classList.contains('hidden')) { corpo.classList.remove('hidden'); icone.classList.add('rotate-180'); } else { corpo.classList.add('hidden'); icone.classList.remove('rotate-180'); } }
 
-        async function marcarComoPago(id) {
-            if(!confirm("Dar baixa neste lançamento com a data de HOJE?")) return;
-            const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
-            const payload = { 
-                empresa: f.empresa, descricao: f.descricao, valor: parseFloat(f.valor), 
-                tipo: f.tipo, categoria: f.categoria, status_pagamento: "Pago", status_nf: f.status_nf, 
-                data_emissao: f.data_emissao || null, data_pagamento: getStrDate(new Date()), 
-                id_os: f.id_os || null, conciliado: f.conciliado || "Não" 
-            };
-            try {
-                await fetch(`${API_URL}/financeiro/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-                loadFinanceiro(); loadDashboard(); 
-            } catch(e) { alert("Erro ao confirmar pagamento."); }
-        }
+        async function marcarComoPago(id) { if(!confirm("Dar baixa neste lançamento?")) return; const f = arrayFinanceiro.find(x => x.id == id); if(!f) return; const payload = { empresa: f.empresa, descricao: f.descricao, valor: parseFloat(f.valor), tipo: f.tipo, categoria: f.categoria, status_pagamento: "Pago", status_nf: f.status_nf, data_emissao: f.data_emissao || null, data_pagamento: getStrDate(new Date()), id_os: f.id_os || null, conciliado: f.conciliado || "Não" }; try { await fetchAPI(`/financeiro/${id}`, { method: 'PUT', body: JSON.stringify(payload) }); loadFinanceiro(); loadDashboard(); } catch(e) { alert("Erro ao confirmar pagamento."); } }
 
-        function formatarMoedaInput(input) {
-            let v = input.value.replace(/\D/g, ''); 
-            if(v === '') { input.value = ''; return; }
-            v = (v / 100).toFixed(2) + ''; v = v.replace(".", ",");
-            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,"); v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
-            input.value = v;
-        }
+        function formatarMoedaInput(input) { let v = input.value.replace(/\D/g, ''); if(v === '') { input.value = ''; return; } v = (v / 100).toFixed(2) + ''; v = v.replace(".", ","); v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,"); v = v.replace(/(\d)(\d{3}),/g, "$1.$2,"); input.value = v; }
 
-        function toggleEntidadeFinanceiro() {
-            const tipo = document.getElementById('fin-tipo').value;
-            if(tipo === 'Entrada') {
-                document.getElementById('box-fin-cliente').classList.remove('hidden');
-                document.getElementById('box-fin-fornecedor').classList.add('hidden');
-                document.getElementById('fin-fornecedor').value = "";
-            } else {
-                document.getElementById('box-fin-cliente').classList.add('hidden');
-                document.getElementById('box-fin-fornecedor').classList.remove('hidden');
-                document.getElementById('fin-cliente').value = "";
-            }
-        }
+        function toggleEntidadeFinanceiro() { const tipo = document.getElementById('fin-tipo').value; if(tipo === 'Entrada') { document.getElementById('box-fin-cliente').classList.remove('hidden'); document.getElementById('box-fin-fornecedor').classList.add('hidden'); document.getElementById('fin-fornecedor').value = ""; } else { document.getElementById('box-fin-cliente').classList.add('hidden'); document.getElementById('box-fin-fornecedor').classList.remove('hidden'); document.getElementById('fin-cliente').value = ""; } }
 
-        async function loadClientesFornecedores() {
-            try {
-                const resC = await fetch(`${API_URL}/clientes`); const arrayClientes = await resC.json();
-                const resF = await fetch(`${API_URL}/fornecedores`); const arrayFornecedores = await resF.json();
-                const optsC = `<option value="">Selecione um Cliente...</option>` + arrayClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-                const optsF = `<option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option>` + arrayFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
-                if(document.getElementById('os-cliente')) document.getElementById('os-cliente').innerHTML = optsC;
-                if(document.getElementById('fin-cliente')) document.getElementById('fin-cliente').innerHTML = optsC;
-                if(document.getElementById('fin-fornecedor')) document.getElementById('fin-fornecedor').innerHTML = optsF;
-            } catch(e) { console.log("Aguardando cadastro de entidades."); }
-        }
+        async function loadClientesFornecedores() { try { const resC = await fetchAPI(`/clientes`); const arrayClientes = await resC.json(); const resF = await fetchAPI(`/fornecedores`); const arrayFornecedores = await resF.json(); const optsC = `<option value="">Selecione um Cliente...</option>` + arrayClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); const optsF = `<option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option>` + arrayFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join(''); if(document.getElementById('os-cliente')) document.getElementById('os-cliente').innerHTML = optsC; if(document.getElementById('fin-cliente')) document.getElementById('fin-cliente').innerHTML = optsC; if(document.getElementById('fin-fornecedor')) document.getElementById('fin-fornecedor').innerHTML = optsF; } catch(e) { console.log("Aguardando entidades."); } }
 
-        // --- GESTÃO DE CLIENTES E FORNECEDORES ---
-        let arrayClientesFull = [];
-        async function loadClientes() {
-            const res = await fetch(`${API_URL}/clientes`); arrayClientesFull = await res.json();
-            document.getElementById('tb-clientes').innerHTML = arrayClientesFull.map(c => `
-                <tr class="border-b border-slate-700/50 hover:bg-slate-800/50">
-                    <td class="p-4 text-white font-bold">${c.nome}</td>
-                    <td class="p-4 text-slate-400 text-xs">${c.telefone || '-'}<br>${c.email || '-'}</td>
-                    <td class="p-4 text-slate-400 text-xs">${c.cnpj_cpf || '-'}</td>
-                    <td class="p-4 text-center flex justify-center gap-3">
-                        <button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deletarItem('clientes', ${c.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`).join('');
-        }
+        let arrayClientesFull = []; async function loadClientes() { const res = await fetchAPI(`/clientes`); arrayClientesFull = await res.json(); document.getElementById('tb-clientes').innerHTML = arrayClientesFull.map(c => `<tr class="border-b border-slate-700/50 hover:bg-slate-800/50"><td class="p-4 text-white font-bold">${c.nome}</td><td class="p-4 text-slate-400 text-xs">${c.telefone || '-'}<br>${c.email || '-'}</td><td class="p-4 text-slate-400 text-xs">${c.cnpj_cpf || '-'}</td><td class="p-4 text-center flex justify-center gap-3"><button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button><button onclick="deletarItem('clientes', ${c.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); }
         function abrirNovoCliente() { document.getElementById('cli-id').value=""; document.getElementById('cli-nome').value=""; document.getElementById('cli-cnpj').value=""; document.getElementById('cli-telefone').value=""; document.getElementById('cli-email').value=""; document.getElementById('cli-endereco').value=""; abrirModal('modal-cliente'); }
-        async function salvarCliente(e) { e.preventDefault(); const p = { nome: document.getElementById('cli-nome').value, email: document.getElementById('cli-email').value, telefone: document.getElementById('cli-telefone').value, cnpj_cpf: document.getElementById('cli-cnpj').value, endereco: document.getElementById('cli-endereco').value }; await fetch(`${API_URL}/clientes`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-cliente'); loadClientes(); loadClientesFornecedores(); }
+        async function salvarCliente(e) { e.preventDefault(); const p = { nome: document.getElementById('cli-nome').value, email: document.getElementById('cli-email').value, telefone: document.getElementById('cli-telefone').value, cnpj_cpf: document.getElementById('cli-cnpj').value, endereco: document.getElementById('cli-endereco').value }; await fetchAPI(`/clientes`, { method: 'POST', body: JSON.stringify(p) }); fecharModal('modal-cliente'); loadClientes(); loadClientesFornecedores(); }
 
-        let arrayFornecedoresFull = [];
-        async function loadFornecedores() {
-            const res = await fetch(`${API_URL}/fornecedores`); arrayFornecedoresFull = await res.json();
-            document.getElementById('tb-fornecedores').innerHTML = arrayFornecedoresFull.map(f => `
-                <tr class="border-b border-slate-700/50 hover:bg-slate-800/50">
-                    <td class="p-4 text-white font-bold">${f.nome}</td>
-                    <td class="p-4"><span class="text-[10px] uppercase font-bold text-emerald-500">${f.categoria || '-'}</span></td>
-                    <td class="p-4 text-slate-400 text-xs">${f.telefone || '-'}<br>${f.email || '-'}</td>
-                    <td class="p-4 text-center flex justify-center gap-3">
-                        <button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deletarItem('fornecedores', ${f.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`).join('');
-        }
+        let arrayFornecedoresFull = []; async function loadFornecedores() { const res = await fetchAPI(`/fornecedores`); arrayFornecedoresFull = await res.json(); document.getElementById('tb-fornecedores').innerHTML = arrayFornecedoresFull.map(f => `<tr class="border-b border-slate-700/50 hover:bg-slate-800/50"><td class="p-4 text-white font-bold">${f.nome}</td><td class="p-4"><span class="text-[10px] uppercase font-bold text-emerald-500">${f.categoria || '-'}</span></td><td class="p-4 text-slate-400 text-xs">${f.telefone || '-'}<br>${f.email || '-'}</td><td class="p-4 text-center flex justify-center gap-3"><button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button><button onclick="deletarItem('fornecedores', ${f.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); }
         function abrirNovoFornecedor() { document.getElementById('for-id').value=""; document.getElementById('for-nome').value=""; document.getElementById('for-cnpj').value=""; document.getElementById('for-telefone').value=""; document.getElementById('for-email').value=""; abrirModal('modal-fornecedor'); }
-        async function salvarFornecedor(e) { e.preventDefault(); const p = { nome: document.getElementById('for-nome').value, email: document.getElementById('for-email').value, telefone: document.getElementById('for-telefone').value, cnpj_cpf: document.getElementById('for-cnpj').value, categoria: document.getElementById('for-categoria').value }; await fetch(`${API_URL}/fornecedores`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-fornecedor'); loadFornecedores(); loadClientesFornecedores(); }
+        async function salvarFornecedor(e) { e.preventDefault(); const p = { nome: document.getElementById('for-nome').value, email: document.getElementById('for-email').value, telefone: document.getElementById('for-telefone').value, cnpj_cpf: document.getElementById('for-cnpj').value, categoria: document.getElementById('for-categoria').value }; await fetchAPI(`/fornecedores`, { method: 'POST', body: JSON.stringify(p) }); fecharModal('modal-fornecedor'); loadFornecedores(); loadClientesFornecedores(); }
     </script>
 </body>
 </html>
