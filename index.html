@@ -103,14 +103,18 @@
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">NÚMERO OS</label><input type="text" id="os-numero" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA PROGRAMADA</label><input type="date" id="os-data" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                 </div>
-                <label class="block text-xs font-bold text-slate-500 mb-1">CLIENTE / NOME DO LOCAL</label>
-                <input type="text" id="os-cliente" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
+                <label class="block text-xs font-bold text-emerald-500 mb-1"><i class="fa-solid fa-building-user mr-1"></i> CLIENTE VINCULADO</label>
+<select id="os-cliente" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 focus:border-brand outline-none transition">
+    <option value="">Selecione o Cliente...</option>
+</select>
                 <label class="block text-xs font-bold text-slate-500 mb-1">ENDEREÇO / REFERÊNCIA</label>
                 <input type="text" id="os-endereco" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <label class="block text-xs font-bold text-slate-500 mb-1">PLATAFORMA (Opcional)</label>
                 <input type="text" id="os-plataforma" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <label class="block text-xs font-bold text-slate-500 mb-1">DESCRIÇÃO DA ATIVIDADE</label>
                 <textarea id="os-desc" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm"></textarea>
+                <label class="block text-xs font-bold text-yellow-500 mb-1 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ORIENTAÇÕES INTERNAS (Aparece para o Técnico)</label>
+<textarea id="os-orientacoes" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm" placeholder="Ex: Cuidado com o rack principal, acesso restrito..."></textarea>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">TÉCNICO</label><select id="os-tecnico" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></select></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">STATUS ATUAL</label><select id="os-status" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Pendente</option><option>Em Execução</option><option>Concluído</option><option>Cancelada</option></select></div>
@@ -385,7 +389,12 @@
             carregarDadosGlobais();
         }
         function getQueryString() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
-        function carregarDadosGlobais() { loadDashboard(); loadFinanceiro(); loadOS(); }
+        function carregarDadosGlobais() { 
+            loadDashboard(); 
+            loadFinanceiro(); 
+            loadOS(); 
+            loadClientesFornecedores();
+        }
 
         // --- LOGIN ---
         async function realizarLogin(e) {
@@ -706,23 +715,85 @@ async function loadDashboard() {
         </tr>`).join('');
 }
 
-        function abrirNovaOS() { document.getElementById('os-id').value=""; document.getElementById('os-numero').value=""; document.getElementById('os-cliente').value=""; document.getElementById('os-endereco').value=""; document.getElementById('os-plataforma').value=""; document.getElementById('os-desc').value=""; document.getElementById('os-arquivos-list').innerHTML=""; abrirModal('modal-os'); }
+        function abrirNovaOS() { 
+            document.getElementById('os-id').value=""; 
+            document.getElementById('os-numero').value=""; 
+            document.getElementById('os-cliente').value=""; // Agora é select
+            document.getElementById('os-endereco').value=""; 
+            document.getElementById('os-plataforma').value=""; 
+            document.getElementById('os-desc').value=""; 
+            document.getElementById('os-orientacoes').value=""; // Novo
+            document.getElementById('os-arquivos-list').innerHTML=""; 
+            abrirModal('modal-os'); 
+        }
         
         async function editarOS(id) {
             const o = arrayOS.find(x => x.id == id); if(!o) return;
-            document.getElementById('os-id').value=o.id; document.getElementById('os-empresa').value=o.empresa; document.getElementById('os-numero').value=o.numero_os; document.getElementById('os-cliente').value=o.cliente; document.getElementById('os-endereco').value=o.endereco; document.getElementById('os-plataforma').value=o.plataforma; document.getElementById('os-desc').value=o.servico_descricao; document.getElementById('os-tecnico').value=o.id_tecnico; document.getElementById('os-status').value=o.status; if(o.data_programada) document.getElementById('os-data').value = o.data_programada;
+            document.getElementById('os-id').value=o.id; 
+            document.getElementById('os-empresa').value=o.empresa; 
+            document.getElementById('os-numero').value=o.numero_os; 
+            document.getElementById('os-cliente').value=o.id_cliente || ""; // Carrega pelo ID
+            document.getElementById('os-endereco').value=o.endereco; 
+            document.getElementById('os-plataforma').value=o.plataforma; 
+            document.getElementById('os-desc').value=o.servico_descricao; 
+            document.getElementById('os-orientacoes').value=o.orientacoes_admin || ""; // Carrega orientações
+            document.getElementById('os-tecnico').value=o.id_tecnico; 
+            document.getElementById('os-status').value=o.status; 
+            if(o.data_programada) document.getElementById('os-data').value = o.data_programada;
+            
             const rArq = await fetch(`${API_URL}/arquivos/documentos/${id}`); const dArq = await rArq.json();
             document.getElementById('os-arquivos-list').innerHTML = dArq.arquivos.map(a => `<a href="${API_URL}/download/documentos/${id}/${a}" target="_blank" class="block text-brand underline"><i class="fa-solid fa-file text-red-500 mr-1"></i>${a}</a>`).join('');
             abrirModal('modal-os');
         }
 
         async function salvarOS(e) {
-            e.preventDefault(); const id = document.getElementById('os-id').value;
-            const payload = { empresa: document.getElementById('os-empresa').value, numero_os: document.getElementById('os-numero').value, cliente: document.getElementById('os-cliente').value, endereco: document.getElementById('os-endereco').value, plataforma: document.getElementById('os-plataforma').value, servico_descricao: document.getElementById('os-desc').value, id_tecnico: parseInt(document.getElementById('os-tecnico').value), data_programada: document.getElementById('os-data').value, status: document.getElementById('os-status').value };
-            const res = await fetch(id ? `${API_URL}/os/${id}` : `${API_URL}/os`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }); const data = await res.json();
-            const fileInput = document.getElementById('os-docs');
-            if(fileInput.files.length > 0) { const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/upload/documentos/${id ? id : data.id}`, { method: 'POST', body: fData }); }
-            fecharModal('modal-os'); loadOS();
+            e.preventDefault(); 
+            const id = document.getElementById('os-id').value;
+            const selectCliente = document.getElementById('os-cliente');
+            const idClienteVal = selectCliente.value ? parseInt(selectCliente.value) : null;
+            const nomeCliente = selectCliente.options[selectCliente.selectedIndex]?.text || "Avulso";
+
+            const payload = { 
+                empresa: document.getElementById('os-empresa').value, 
+                numero_os: document.getElementById('os-numero').value, 
+                cliente: nomeCliente, // Nome visível na tela
+                id_cliente: idClienteVal, // ID relacional no banco
+                endereco: document.getElementById('os-endereco').value, 
+                plataforma: document.getElementById('os-plataforma').value, 
+                servico_descricao: document.getElementById('os-desc').value, 
+                orientacoes_admin: document.getElementById('os-orientacoes').value, // Nova coluna
+                id_tecnico: parseInt(document.getElementById('os-tecnico').value), 
+                data_programada: document.getElementById('os-data').value, 
+                status: document.getElementById('os-status').value 
+            };
+
+            try {
+                const res = await fetch(id ? `${API_URL}/os/${id}` : `${API_URL}/os`, { 
+                    method: id ? 'PUT' : 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify(payload) 
+                }); 
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    alert("Erro ao salvar: " + JSON.stringify(error));
+                    return;
+                }
+                
+                const data = await res.json();
+                const fileInput = document.getElementById('os-docs');
+                if(fileInput.files.length > 0) { 
+                    const fData = new FormData(); 
+                    for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); 
+                    await fetch(`${API_URL}/upload/documentos/${id ? id : data.id}`, { method: 'POST', body: fData }); 
+                }
+                
+                fecharModal('modal-os'); 
+                loadOS();
+            } catch(err) {
+                console.error("Falha na comunicação: ", err);
+                alert("Erro fatal ao salvar OS. Verifique a conexão.");
+            }
         }
 
         // --- USUÁRIOS ---
@@ -903,6 +974,25 @@ async function loadDashboard() {
         document.getElementById('fin-cliente').value = ""; // Limpa cliente
     }
 }
+
+async function loadClientesFornecedores() {
+            try {
+                const resC = await fetch(`${API_URL}/clientes`); 
+                const arrayClientes = await resC.json();
+                
+                const resF = await fetch(`${API_URL}/fornecedores`); 
+                const arrayFornecedores = await resF.json();
+
+                const optsC = `<option value="">Selecione um Cliente...</option>` + arrayClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+                const optsF = `<option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option>` + arrayFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+
+                if(document.getElementById('os-cliente')) document.getElementById('os-cliente').innerHTML = optsC;
+                if(document.getElementById('fin-cliente')) document.getElementById('fin-cliente').innerHTML = optsC;
+                if(document.getElementById('fin-fornecedor')) document.getElementById('fin-fornecedor').innerHTML = optsF;
+            } catch(e) { 
+                console.log("Aguardando cadastro de entidades."); 
+            }
+        }
 
     </script>
 </body>
