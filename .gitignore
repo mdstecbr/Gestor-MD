@@ -1,1 +1,38 @@
+# ==========================================
+# 🛡️ ARQUIVOS DE SEGURANÇA (NUNCA SUBIR)
+# ==========================================
 .env
+*.pem
+*.key
+
+# ==========================================
+# 🐍 PYTHON & AMBIENTE VIRTUAL
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# ==========================================
+# 🗄️ BANCO DE DADOS LOCAL (FALLBACK)
+# ==========================================
+*.db
+*.sqlite3
+
+# ==========================================
+# 📁 UPLOADS DE CLIENTES (DADOS SENSÍVEIS)
+# ==========================================
+# Ignoramos as pastas que o main.py cria localmente
+Documentos_OS/
+Evidencias_OS/
+Comprovantes_FIN/
+
+# ==========================================
+# 🖥️ IDE E SISTEMA OPERACIONAL
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
