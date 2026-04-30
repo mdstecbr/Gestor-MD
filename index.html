@@ -796,7 +796,7 @@
             abrirModal('modal-fin'); 
         }
 
-        async function editarFin(id) { 
+       async function editarFin(id) { 
             const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
             document.getElementById('fin-id').value=f.id; 
             document.getElementById('fin-empresa').value=f.empresa; 
@@ -804,6 +804,13 @@
             document.getElementById('fin-valor').value = f.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
             document.getElementById('fin-tipo').value=f.tipo; 
             document.getElementById('fin-categoria').value=f.categoria; 
+            
+            // --> NOVO: Carrega os IDs na tela ao editar
+            document.getElementById('fin-cliente').value = f.id_cliente || ""; 
+            document.getElementById('fin-fornecedor').value = f.id_fornecedor || ""; 
+            // Atualiza a exibição das caixas dependendo se é Entrada ou Saída
+            toggleEntidadeFinanceiro();
+
             document.getElementById('fin-status-pgto').value=f.status_pagamento; 
             document.getElementById('fin-status-nf').value=f.status_nf; 
             document.getElementById('fin-data-emissao').value=f.data_emissao||""; 
@@ -820,6 +827,10 @@
             e.preventDefault(); const id = document.getElementById('fin-id').value;
             const valorRaw = document.getElementById('fin-valor').value.replace(/\./g, '').replace(',', '.');
             
+            // --> NOVO: Captura os IDs preenchidos na tela
+            const selCliente = document.getElementById('fin-cliente').value;
+            const selFornecedor = document.getElementById('fin-fornecedor').value;
+
             const payload = { 
                 empresa: document.getElementById('fin-empresa').value, 
                 descricao: document.getElementById('fin-desc').value, 
@@ -831,6 +842,11 @@
                 data_emissao: document.getElementById('fin-data-emissao').value || null, 
                 data_pagamento: document.getElementById('fin-data-pagamento').value || null, 
                 id_os: document.getElementById('fin-id-os').value ? parseInt(document.getElementById('fin-id-os').value) : null, 
+                
+                // --> NOVO: Injeta no Payload
+                id_cliente: selCliente ? parseInt(selCliente) : null,
+                id_fornecedor: selFornecedor ? parseInt(selFornecedor) : null,
+                
                 conciliado: document.getElementById('fin-conciliado').value 
             };
             
