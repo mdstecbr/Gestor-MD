@@ -107,12 +107,14 @@ class OSRequest(BaseModel):
     empresa: str
     numero_os: str
     cliente: str
-    plataforma: Optional[str] = ""
+    id_cliente: Optional[int] = None  
     endereco: Optional[str] = ""
+    plataforma: Optional[str] = ""
     servico_descricao: str
+    orientacoes_admin: Optional[str] = "" 
     id_tecnico: int
-    data_programada: str
-    status: Optional[str] = "Pendente"
+    data_programada: Optional[str] = None
+    status: str
 
 class StatusOSRequest(BaseModel):
     status: str
