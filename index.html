@@ -506,37 +506,101 @@
             }
         }
 
-        // --- LOGIN ---
+        // --- GESTÃO DE SESSÃO E LOGIN ---
+        const TEMPO_LIMITE_INATIVIDADE = 20 * 60 * 1000; // 20 minutos em milissegundos
+
+        function iniciarInterface(user) {
+            id_usuario_logado = user.id; 
+            perfil_logado = user.perfil;
+            document.getElementById('login-screen').classList.add('hidden');
+            
+            if(perfil_logado === 'Admin' || perfil_logado === 'Contador') {
+                document.getElementById('admin-screen').classList.remove('hidden');
+                document.getElementById('admin-name').innerText = user.nome;
+                document.getElementById('admin-perfil-label').innerText = perfil_logado;
+                
+                if(perfil_logado === 'Contador') {
+                    document.getElementById('nav-os').classList.add('hidden');
+                    document.getElementById('nav-equipe').classList.add('hidden');
+                }
+                carregarDadosGlobais(); loadEquipe(); carregarDropdownTecnicos(); navegar('dashboard');
+            } else {
+                document.getElementById('tech-screen').classList.remove('hidden');
+                document.getElementById('tech-name').innerText = user.nome;
+                let hj = new Date(); let day = hj.getDay() || 7; hj.setDate(hj.getDate() - day + 1);
+                techCurrentWeekStart = hj;
+                atualizarStatusPontoUI(); loadTechWeekView();
+            }
+        }
+
         async function realizarLogin(e) {
             e.preventDefault();
             try {
                 const res = await fetch(`${API_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario: username.value, senha: password.value }) });
                 if (res.ok) {
                     const user = await res.json();
-                    id_usuario_logado = user.id; perfil_logado = user.perfil;
-                    document.getElementById('login-screen').classList.add('hidden');
                     
-                    if(perfil_logado === 'Admin' || perfil_logado === 'Contador') {
-                        document.getElementById('admin-screen').classList.remove('hidden');
-                        document.getElementById('admin-name').innerText = user.nome;
-                        document.getElementById('admin-perfil-label').innerText = perfil_logado;
-                        
-                        if(perfil_logado === 'Contador') {
-                            document.getElementById('nav-os').classList.add('hidden');
-                            document.getElementById('nav-equipe').classList.add('hidden');
-                        }
-                        carregarDadosGlobais(); loadEquipe(); carregarDropdownTecnicos(); navegar('dashboard');
-                    } else {
-                        document.getElementById('tech-screen').classList.remove('hidden');
-                        document.getElementById('tech-name').innerText = user.nome;
-                        let hj = new Date(); let day = hj.getDay() || 7; hj.setDate(hj.getDate() - day + 1);
-                        techCurrentWeekStart = hj;
-                        atualizarStatusPontoUI(); loadTechWeekView();
-                    }
+                    // GRAVA NO NAVEGADOR (Persistência para sobreviver ao F5)
+                    localStorage.setItem('md_session', JSON.stringify(user));
+                    localStorage.setItem('md_last_activity', Date.now().toString());
+                    
+                    iniciarInterface(user);
                 } else document.getElementById('login-error').classList.remove('hidden');
             } catch (err) { alert("Servidor offline!"); }
         }
 
+        function logout() { 
+            localStorage.removeItem('md_session');
+            localStorage.removeItem('md_last_activity');
+            location.reload(); 
+        }
+
+        // --- WATCHDOG: RASTREAMENTO DE INATIVIDADE E RESTAURAÇÃO (F5) ---
+        
+        function resetarTempoOcioso() {
+            // Só atualiza o relógio se tiver alguém logado
+            if(id_usuario_logado) {
+                localStorage.setItem('md_last_activity', Date.now().toString());
+            }
+        }
+
+        // Fica de olho em qualquer movimento que o usuário fizer na tela
+        window.addEventListener('mousemove', resetarTempoOcioso);
+        window.addEventListener('keypress', resetarTempoOcioso);
+        window.addEventListener('click', resetarTempoOcioso);
+        window.addEventListener('scroll', resetarTempoOcioso);
+        window.addEventListener('touchstart', resetarTempoOcioso); // Para celulares
+
+        // Rotina que verifica a inatividade a cada 1 minuto (60000 ms)
+        setInterval(() => {
+            if(id_usuario_logado) {
+                const ultimaAtividade = parseInt(localStorage.getItem('md_last_activity') || '0');
+                if(Date.now() - ultimaAtividade > TEMPO_LIMITE_INATIVIDADE) {
+                    alert("⚠️ Sua sessão expirou por inatividade (20 minutos) por motivos de segurança.");
+                    logout();
+                }
+            }
+        }, 60000);
+
+        // Verifica se já existe um login válido ao carregar a página (O F5)
+        window.addEventListener('DOMContentLoaded', () => {
+            const sessionData = localStorage.getItem('md_session');
+            const lastActive = localStorage.getItem('md_last_activity');
+            
+            if(sessionData && lastActive) {
+                // Checa se o F5 não foi dado DEPOIS que a sessão já tinha vencido
+                if(Date.now() - parseInt(lastActive) < TEMPO_LIMITE_INATIVIDADE) {
+                    const user = JSON.parse(sessionData);
+                    iniciarInterface(user);
+                } else {
+                    // Se venceu, limpa a sujeira silenciosamente
+                    localStorage.removeItem('md_session');
+                    localStorage.removeItem('md_last_activity');
+                }
+            }
+        });
+
+        
         // --- PONTO (GPS) ---
         async function atualizarStatusPontoUI() {
             const res = await fetch(`${API_URL}/ponto/status/${id_usuario_logado}`); const data = await res.json();
@@ -564,7 +628,7 @@
             const feriados = ["01/01", "21/04", "01/05", "07/09", "12/10", "02/11", "15/11", "25/12"];
             const isFeriado = feriados.includes(diaMes);
 
-            if (diaSemana === 0 || diaSemana === 6 || isFeriado || hora < 8 || hora >= 18) {
+            if (diaSemana === 0 || diaSemana === 6 || isFeriado || hora < 8 || hora >= 17) {
                 const resp = prompt(`Você está registrando ponto fora do horário padrão ou em um feriado.\n\nIsto é uma Hora Extra (HE)?\nSe SIM, digite o motivo abaixo.\nSe NÃO, apenas clique em OK deixando em branco:`);
                 if (resp && resp.trim() !== "") {
                     is_he = "Sim";
