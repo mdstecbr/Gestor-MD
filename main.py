@@ -251,35 +251,39 @@ def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None):
         
     return df.to_dict(orient="records")
 
+# --- NOVO LANÇAMENTO FINANCEIRO ---
 @app.post("/api/financeiro")
-def add_financeiro(req: FinanceiroRequest):
+def criar_financeiro(req: FinanceiroRequest):
+    dh_br = hora_brasil().strftime("%Y-%m-%d %H:%M:%S")
     with database.conectar() as conn:
-        query = text("""
-            INSERT INTO financeiro (empresa, descricao, valor, tipo, categoria, status_pagamento, 
-                                    status_nf, data_emissao, data_pagamento, id_os, conciliado) 
-            VALUES (:emp, :des, :val, :tip, :cat, :spg, :snf, :dem, :dpg, :ios, :conc)
-        """)
-        conn.execute(query, {
-            "emp": req.empresa, "des": req.descricao, "val": req.valor, "tip": req.tipo, 
-            "cat": req.categoria, "spg": req.status_pagamento, "snf": req.status_nf, 
-            "dem": req.data_emissao, "dpg": req.data_pagamento, "ios": req.id_os, "conc": req.conciliado
+        res = conn.execute(text("""
+            INSERT INTO financeiro 
+            (empresa, descricao, valor, tipo, categoria, status_pagamento, status_nf, data_emissao, data_pagamento, id_os, id_cliente, id_fornecedor, conciliado, data_registro) 
+            VALUES (:emp, :desc, :val, :tipo, :cat, :spg, :snf, :dem, :dpg, :ido, :idc, :idf, :conc, :dreg)
+            RETURNING id
+        """), {
+            "emp": req.empresa, "desc": req.descricao, "val": req.valor, "tipo": req.tipo, "cat": req.categoria,
+            "spg": req.status_pagamento, "snf": req.status_nf, "dem": req.data_emissao, "dpg": req.data_pagamento,
+            "ido": req.id_os, "idc": req.id_cliente, "idf": req.id_fornecedor, "conc": req.conciliado, "dreg": dh_br
         })
+        novo_id = res.scalar()
         conn.commit()
-    return {"status": "ok"}
+    return {"status": "ok", "id": novo_id}
 
+# --- EDITAR LANÇAMENTO FINANCEIRO ---
 @app.put("/api/financeiro/{id}")
-def update_financeiro(id: int, req: FinanceiroRequest):
+def atualizar_financeiro(id: int, req: FinanceiroRequest):
     with database.conectar() as conn:
-        query = text("""
-            UPDATE financeiro SET empresa=:emp, descricao=:des, valor=:val, tipo=:tip, 
-                                  categoria=:cat, status_pagamento=:spg, status_nf=:snf, 
-                                  data_emissao=:dem, data_pagamento=:dpg, id_os=:ios, conciliado=:conc 
+        conn.execute(text("""
+            UPDATE financeiro SET 
+                empresa=:emp, descricao=:desc, valor=:val, tipo=:tipo, categoria=:cat, 
+                status_pagamento=:spg, status_nf=:snf, data_emissao=:dem, data_pagamento=:dpg, 
+                id_os=:ido, id_cliente=:idc, id_fornecedor=:idf, conciliado=:conc
             WHERE id=:id
-        """)
-        conn.execute(query, {
-            "emp": req.empresa, "des": req.descricao, "val": req.valor, "tip": req.tipo, 
-            "cat": req.categoria, "spg": req.status_pagamento, "snf": req.status_nf, 
-            "dem": req.data_emissao, "dpg": req.data_pagamento, "ios": req.id_os, "conc": req.conciliado, "id": id
+        """), {
+            "emp": req.empresa, "desc": req.descricao, "val": req.valor, "tipo": req.tipo, "cat": req.categoria,
+            "spg": req.status_pagamento, "snf": req.status_nf, "dem": req.data_emissao, "dpg": req.data_pagamento,
+            "ido": req.id_os, "idc": req.id_cliente, "idf": req.id_fornecedor, "conc": req.conciliado, "id": id
         })
         conn.commit()
     return {"status": "ok"}
@@ -363,44 +367,37 @@ def list_os():
         df = pd.read_sql_query(text(query), conn)
     return df.to_dict(orient="records")
 
+# --- CRIAR NOVA OS ---
 @app.post("/api/os")
-def add_os(req: OSRequest, tasks: BackgroundTasks):
+def criar_os(req: OSRequest):
     with database.conectar() as conn:
-        query = text("""
-            INSERT INTO ordens_servico (empresa, numero_os, cliente, plataforma, endereco, 
-                                        servico_descricao, id_tecnico, data_programada, status) 
-            VALUES (:emp, :num, :cli, :pla, :end, :des, :tec, :dat, :sta) RETURNING id
-        """)
-        res = conn.execute(query, {
-            "emp": req.empresa, "num": req.numero_os, "cli": req.cliente, "pla": req.plataforma, 
-            "end": req.endereco, "des": req.servico_descricao, "tec": req.id_tecnico, 
-            "dat": req.data_programada, "sta": req.status
+        res = conn.execute(text("""
+            INSERT INTO ordens_servico 
+            (empresa, numero_os, cliente, id_cliente, endereco, plataforma, servico_descricao, orientacoes_admin, id_tecnico, data_programada, status) 
+            VALUES (:e, :n, :c, :idc, :end, :p, :sd, :oa, :it, :dp, :st)
+            RETURNING id
+        """), {
+            "e": req.empresa, "n": req.numero_os, "c": req.cliente, "idc": req.id_cliente,
+            "end": req.endereco, "p": req.plataforma, "sd": req.servico_descricao, 
+            "oa": req.orientacoes_admin, "it": req.id_tecnico, "dp": req.data_programada, "st": req.status
         })
-        os_id = res.fetchone()[0]
-        
-        # Busca o técnico para enviar o e-mail
-        tec = conn.execute(text("SELECT nome, email FROM usuarios WHERE id = :id"), {"id": req.id_tecnico}).fetchone()
+        novo_id = res.scalar()
         conn.commit()
+    return {"status": "ok", "id": novo_id}
 
-    if tec and tec[1]:
-        html = f"<h2>Nova OS Atribuída: #{req.numero_os}</h2><p>Olá {tec[0]}, você tem uma nova tarefa agendada para o cliente <b>{req.cliente}</b>.</p><p>Verifique o Portal do Técnico.</p>"
-        tasks.add_task(disparar_email, tec[1], f"Nova OS MD: #{req.numero_os}", html)
-        
-    return {"id": os_id}
-
+# --- EDITAR OS EXISTENTE ---
 @app.put("/api/os/{id}")
-def update_os(id: int, req: OSRequest):
+def atualizar_os(id: int, req: OSRequest):
     with database.conectar() as conn:
-        query = text("""
-            UPDATE ordens_servico SET empresa=:emp, numero_os=:num, cliente=:cli, plataforma=:pla, 
-                                      endereco=:end, servico_descricao=:des, id_tecnico=:tec, 
-                                      data_programada=:dat, status=:sta 
+        conn.execute(text("""
+            UPDATE ordens_servico SET 
+                empresa=:e, numero_os=:n, cliente=:c, id_cliente=:idc, endereco=:end, plataforma=:p, 
+                servico_descricao=:sd, orientacoes_admin=:oa, id_tecnico=:it, data_programada=:dp, status=:st
             WHERE id=:id
-        """)
-        conn.execute(query, {
-            "emp": req.empresa, "num": req.numero_os, "cli": req.cliente, "pla": req.plataforma, 
-            "end": req.endereco, "des": req.servico_descricao, "tec": req.id_tecnico, 
-            "dat": req.data_programada, "sta": req.status, "id": id
+        """), {
+            "e": req.empresa, "n": req.numero_os, "c": req.cliente, "idc": req.id_cliente,
+            "end": req.endereco, "p": req.plataforma, "sd": req.servico_descricao, 
+            "oa": req.orientacoes_admin, "it": req.id_tecnico, "dp": req.data_programada, "st": req.status, "id": id
         })
         conn.commit()
     return {"status": "ok"}
