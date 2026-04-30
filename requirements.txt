@@ -7,3 +7,6 @@ python-multipart
 requests
 msal
 fpdf
+PyJWT==2.12.1
+passlib==1.7.4
+bcrypt==4.1.2
