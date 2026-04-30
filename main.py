@@ -81,6 +81,7 @@ def disparar_email(destinatario: str, assunto: str, corpo_html: str):
         print(f"❌ Erro crítico ao enviar e-mail: {e}")
 
 # --- MODELOS DE DADOS (PYDANTIC) ---
+# --- MODELOS DE DADOS (PYDANTIC) ---
 class LoginRequest(BaseModel):
     usuario: str
     senha: str
@@ -102,8 +103,10 @@ class FinanceiroRequest(BaseModel):
     status_nf: str
     data_emissao: Optional[str] = None
     data_pagamento: Optional[str] = None
-    id_os: Optional[int] = None           # Vínculo com OS (Centro de Custo)
-    conciliado: Optional[str] = "Não"     # Controle do Contador
+    id_os: Optional[int] = None
+    id_cliente: Optional[int] = None
+    id_fornecedor: Optional[int] = None
+    conciliado: Optional[str] = "Não"
 
 class OSRequest(BaseModel):
     empresa: str
@@ -143,18 +146,6 @@ class FornecedorRequest(BaseModel):
     telefone: Optional[str] = ""
     cnpj_cpf: Optional[str] = ""
     categoria: Optional[str] = ""
-
-# Adicione id_cliente e id_fornecedor no FinanceiroRequest
-class FinanceiroRequest(BaseModel):
-    # ... (mantenha os campos anteriores)
-    id_cliente: Optional[int] = None
-    id_fornecedor: Optional[int] = None
-
-# Adicione id_cliente e orientacoes_admin no OSRequest
-class OSRequest(BaseModel):
-    # ... (mantenha os campos anteriores)
-    id_cliente: Optional[int] = None
-    orientacoes_admin: Optional[str] = ""
 
 # Inicializa as tabelas e colunas no Neon ao ligar o servidor
 database.inicializar_banco()
