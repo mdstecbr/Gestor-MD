@@ -80,6 +80,7 @@
         </div>
     </div>
 
+    <!-- MODAL FINANCEIRO -->
     <div id="modal-fin" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div class="bg-cardbg p-6 rounded-lg w-full max-w-[550px] border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 id="modal-fin-title" class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-money-bill-transfer mr-2 text-brand"></i>Lançamento Financeiro</h3>
@@ -92,23 +93,24 @@
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">VALOR (R$)</label><input type="text" id="fin-valor" oninput="formatarMoedaInput(this)" placeholder="0,00" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                     <div>
-    <label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label>
-    <select id="fin-tipo" onchange="toggleEntidadeFinanceiro()" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white">
-        <option value="Entrada">Entrada (Receita)</option>
-        <option value="Saída">Saída (Despesa)</option>
-    </select>
-</div>
-
-<!-- NOVOS CAMPOS DINÂMICOS -->
-<div id="box-fin-cliente" class="mt-3">
-    <label class="block text-xs font-bold text-emerald-500 mb-1">CLIENTE VINCULADO (Origem da Receita)</label>
-    <select id="fin-cliente" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option value="">Selecione um Cliente...</option></select>
-</div>
-<div id="box-fin-fornecedor" class="mt-3 hidden">
-    <label class="block text-xs font-bold text-red-500 mb-1">FORNECEDOR VINCULADO (Destino da Saída)</label>
-    <select id="fin-fornecedor" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option></select>
-</div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">TIPO</label>
+                        <select id="fin-tipo" onchange="toggleEntidadeFinanceiro()" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white">
+                            <option value="Entrada">Entrada (Receita)</option>
+                            <option value="Saída">Saída (Despesa)</option>
+                        </select>
+                    </div>
                 </div>
+
+                <!-- CAMPOS DINÂMICOS RELACIONAIS -->
+                <div id="box-fin-cliente" class="mb-3">
+                    <label class="block text-xs font-bold text-emerald-500 mb-1">CLIENTE VINCULADO (Origem da Receita)</label>
+                    <select id="fin-cliente" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option value="">Selecione um Cliente...</option></select>
+                </div>
+                <div id="box-fin-fornecedor" class="mb-3 hidden">
+                    <label class="block text-xs font-bold text-red-500 mb-1">FORNECEDOR VINCULADO (Destino da Saída)</label>
+                    <select id="fin-fornecedor" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option></select>
+                </div>
+                
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE EMISSÃO</label><input type="date" id="fin-data-emissao" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA DE PAGAMENTO</label><input type="date" id="fin-data-pagamento" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
@@ -140,6 +142,7 @@
         </div>
     </div>
 
+    <!-- MODAL OS -->
     <div id="modal-os" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div class="bg-cardbg p-6 rounded-lg w-full max-w-[500px] border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 id="modal-os-title" class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-file-contract mr-2 text-brand"></i>Ordem de Serviço</h3>
@@ -152,9 +155,9 @@
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">DATA PROGRAMADA</label><input type="date" id="os-data" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></div>
                 </div>
                 <label class="block text-xs font-bold text-emerald-500 mb-1"><i class="fa-solid fa-building-user mr-1"></i> CLIENTE VINCULADO</label>
-<select id="os-cliente" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 focus:border-brand outline-none transition">
-    <option value="">Selecione o Cliente...</option>
-</select>
+                <select id="os-cliente" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 focus:border-brand outline-none transition">
+                    <option value="">Selecione o Cliente...</option>
+                </select>
                 <label class="block text-xs font-bold text-slate-500 mb-1">ENDEREÇO / REFERÊNCIA</label>
                 <input type="text" id="os-endereco" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3">
                 <label class="block text-xs font-bold text-slate-500 mb-1">PLATAFORMA (Opcional)</label>
@@ -162,7 +165,7 @@
                 <label class="block text-xs font-bold text-slate-500 mb-1">DESCRIÇÃO DA ATIVIDADE</label>
                 <textarea id="os-desc" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm"></textarea>
                 <label class="block text-xs font-bold text-yellow-500 mb-1 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ORIENTAÇÕES INTERNAS (Aparece para o Técnico)</label>
-<textarea id="os-orientacoes" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm" placeholder="Ex: Cuidado com o rack principal, acesso restrito..."></textarea>
+                <textarea id="os-orientacoes" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mb-3 h-16 text-sm" placeholder="Ex: Cuidado com o rack principal, acesso restrito..."></textarea>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">TÉCNICO</label><select id="os-tecnico" required class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"></select></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">STATUS ATUAL</label><select id="os-status" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white"><option>Pendente</option><option>Em Execução</option><option>Concluído</option><option>Cancelada</option></select></div>
@@ -180,6 +183,7 @@
         </div>
     </div>
 
+    <!-- MODAL USUÁRIO -->
     <div id="modal-user" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div class="bg-cardbg p-6 rounded-lg w-full max-w-[400px] border border-slate-700 shadow-2xl">
             <h3 id="modal-user-title" class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-user-plus mr-2 text-brand"></i>Gestão de Usuário</h3>
@@ -206,6 +210,7 @@
         </div>
     </div>
 
+    <!-- TELA DE LOGIN -->
     <div id="login-screen" class="w-full flex items-center justify-center bg-darkbg absolute inset-0 z-50">
         <div class="bg-cardbg p-8 md:p-10 rounded-xl border border-slate-700 shadow-2xl w-[90%] md:w-[400px] text-center">
             <div class="w-24 h-24 flex items-center justify-center mx-auto mb-6">
@@ -222,11 +227,12 @@
         </div>
     </div>
 
+    <!-- TELA DO ADMINISTRADOR -->
     <div id="admin-screen" class="hidden w-full flex flex-col md:flex-row h-full relative">
         <div class="md:hidden w-full bg-sidebarbg border-b border-slate-800 p-4 flex justify-between items-center z-30">
             <div class="flex items-center gap-3">
                 <img src="/static/logo.png" alt="Logo MD" class="h-8 w-auto" onerror="this.style.display='none'">
-                <span class="text-lg font-black text-white italic">Gestor    MD Soluções</span>
+                <span class="text-lg font-black text-white italic">Gestor MD Soluções</span>
             </div>
             <button onclick="toggleMenu()" class="text-white text-2xl focus:outline-none"><i class="fa-solid fa-bars"></i></button>
         </div>
@@ -235,7 +241,7 @@
             <div class="p-6 md:p-8 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <img src="/static/logo.png" alt="Logo MD" class="h-10 w-auto hidden md:block" onerror="this.style.display='none'">
-                    <span class="text-xl font-black text-white tracking-tighter italic hidden md:block">Gestor    MD Soluções</span>
+                    <span class="text-xl font-black text-white tracking-tighter italic hidden md:block">Gestor MD Soluções</span>
                     <span class="text-xl font-black text-white tracking-tighter italic md:hidden">MENU</span>
                 </div>
                 <button onclick="toggleMenu()" class="md:hidden text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
@@ -246,12 +252,13 @@
                 <button onclick="navegar('ponto')" id="nav-ponto" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-clock w-8"></i>Controle de Ponto</button>
                 <button onclick="navegar('financeiro')" id="nav-financeiro" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-receipt w-8"></i>Financeiro</button>
                 <button onclick="navegar('os')" id="nav-os" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-file-invoice w-8"></i>Ordens de Serviço</button>
+                
                 <p class="text-[10px] font-bold text-slate-600 px-4 mt-6 mb-2 tracking-widest">GESTÃO</p>
                 <button onclick="navegar('equipe')" id="nav-equipe" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-user-gear w-8"></i>Equipe e Acessos</button>
+                
                 <p class="text-[10px] font-bold text-slate-600 px-4 mt-6 mb-2 tracking-widest">RELACIONAMENTOS</p>
                 <button onclick="navegar('clientes')" id="nav-clientes" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-building-user w-8"></i>Clientes</button>
                 <button onclick="navegar('fornecedores')" id="nav-fornecedores" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-slate-400 hover:text-white transition flex items-center"><i class="fa-solid fa-truck-fast w-8"></i>Fornecedores</button>
-            
             </nav>
             <div class="p-6 bg-slate-900/50 border-t border-slate-800 flex items-center justify-between">
                 <div><p id="admin-name" class="text-sm font-bold text-white truncate"></p><p class="text-[10px] text-brand font-bold uppercase tracking-wider" id="admin-perfil-label">Administrador</p></div>
@@ -275,26 +282,28 @@
                 <button onclick="aplicarFiltroData()" class="w-full md:w-auto bg-brand hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-lg transition shadow-lg text-sm flex items-center justify-center"><i class="fa-solid fa-filter mr-2"></i> Filtrar</button>
             </div>
 
+            <!-- VIEW: DASHBOARD -->
             <div id="page-dashboard" class="page-view flex-1">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Receitas (Pagas)</p><h4 id="dash-in" class="text-xl md:text-2xl font-black text-emerald-400">R$ 0,00</h4></div>
-        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Despesas (Pagas)</p><h4 id="dash-out" class="text-xl md:text-2xl font-black text-red-400">R$ 0,00</h4></div>
-        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-brand"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Saldo Líquido</p><h4 id="dash-total" class="text-xl md:text-2xl font-black text-white">R$ 0,00</h4></div>
-        <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Ordens de Serviço</p><h4 id="dash-os" class="text-xl md:text-2xl font-black text-white">0</h4></div>
-    </div>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
-        <div class="bg-cardbg p-6 rounded-xl border border-slate-700">
-            <h4 class="text-sm font-bold text-slate-400 mb-4 uppercase"><i class="fa-solid fa-chart-line mr-2 text-brand"></i>Fluxo de Caixa (Pagas)</h4>
-            <div class="relative h-64 w-full flex justify-center"><canvas id="chartFin"></canvas></div>
-        </div>
-        <div class="bg-cardbg p-6 rounded-xl border border-slate-700">
-            <h4 class="text-sm font-bold text-slate-400 mb-4 uppercase"><i class="fa-solid fa-chart-pie mr-2 text-brand"></i>Status Geral (OS)</h4>
-            <div class="relative h-64 w-full flex justify-center"><canvas id="chartOS"></canvas></div>
-        </div>
-    </div>
-</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Receitas (Pagas)</p><h4 id="dash-in" class="text-xl md:text-2xl font-black text-emerald-400">R$ 0,00</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Despesas (Pagas)</p><h4 id="dash-out" class="text-xl md:text-2xl font-black text-red-400">R$ 0,00</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-brand"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Saldo Líquido</p><h4 id="dash-total" class="text-xl md:text-2xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700 relative overflow-hidden"><div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Ordens de Serviço</p><h4 id="dash-os" class="text-xl md:text-2xl font-black text-white">0</h4></div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-400 mb-4 uppercase"><i class="fa-solid fa-chart-line mr-2 text-brand"></i>Fluxo de Caixa (Pagas)</h4>
+                        <div class="relative h-64 w-full flex justify-center"><canvas id="chartFin"></canvas></div>
+                    </div>
+                    <div class="bg-cardbg p-6 rounded-xl border border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-400 mb-4 uppercase"><i class="fa-solid fa-chart-pie mr-2 text-brand"></i>Status Geral (OS)</h4>
+                        <div class="relative h-64 w-full flex justify-center"><canvas id="chartOS"></canvas></div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- VIEW: PONTO -->
             <div id="page-ponto" class="page-view hidden flex-1">
                 <h2 class="text-2xl font-bold text-white mb-6">Controle de Ponto</h2>
                 <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
@@ -302,6 +311,7 @@
                 </div>
             </div>
 
+            <!-- VIEW: FINANCEIRO -->
             <div id="page-financeiro" class="page-view hidden flex-1">
                 <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
                     <div><h2 class="text-2xl font-bold text-white">Financeiro Contábil</h2></div>
@@ -315,6 +325,7 @@
                 </div>
             </div>
 
+            <!-- VIEW: OS -->
             <div id="page-os" class="page-view hidden flex-1">
                 <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
                     <div><h2 class="text-2xl font-bold text-white">Ordens de Serviço</h2></div>
@@ -334,13 +345,7 @@
                 </div>
             </div>
 
-            <div id="page-os" class="page-view hidden flex-1">
-                <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl font-bold text-white">Ordens de Serviço</h2></div><button onclick="abrirNovaOS()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-bolt mr-2"></i>Emitir OS</button></div>
-                <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
-                    <table class="w-full text-sm text-left min-w-[600px]"><thead class="bg-slate-800 text-xs text-slate-400 font-bold uppercase tracking-widest"><tr><th class="p-4">Data Prog.</th><th class="p-4">OS</th><th class="p-4">Cliente</th><th class="p-4">Técnico</th><th class="p-4">Status</th><th class="p-4 text-center">Ações</th></tr></thead><tbody id="tb-os" class="divide-y divide-slate-700/50"></tbody></table>
-                </div>
-            </div>
-
+            <!-- VIEW: EQUIPE -->
             <div id="page-equipe" class="page-view hidden flex-1">
                 <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4"><div><h2 class="text-2xl font-bold text-white">Equipe</h2></div><button onclick="abrirNovoUser()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition"><i class="fa-solid fa-user-plus mr-2"></i>Novo Usuário</button></div>
                 <div class="bg-cardbg rounded-xl border border-slate-700 overflow-x-auto">
@@ -370,10 +375,10 @@
                 </div>
             </div>
 
-
         </main>
     </div>
 
+    <!-- TELA DO TÉCNICO (MOBILE FIRST) -->
     <div id="tech-screen" class="hidden w-full flex flex-col h-full bg-darkbg overflow-hidden relative">
         <header class="bg-sidebarbg border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 shrink-0">
             <div class="flex items-center gap-3">
@@ -402,6 +407,7 @@
         <main class="flex-1 p-4 pb-20 overflow-y-auto space-y-4" id="tech-task-list"></main>
     </div>
 
+    <!-- SCRIPTS CORE -->
     <script>
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); }); }
 
@@ -423,18 +429,18 @@
         }
 
         function navegar(pagina) {
-    document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active', 'text-white'));
-    document.getElementById(`page-${pagina}`).classList.remove('hidden');
-    if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
-    document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
-    if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
-    
-    // Gatilhos de carregamento sob demanda (Lazy Loading estratégico)
-    if (pagina === 'ponto') loadPontoAdmin();
-    if (pagina === 'clientes') loadClientes();
-    if (pagina === 'fornecedores') loadFornecedores();
-}
+            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active', 'text-white'));
+            document.getElementById(`page-${pagina}`).classList.remove('hidden');
+            if(document.getElementById(`nav-${pagina}`)) document.getElementById(`nav-${pagina}`).classList.add('nav-active', 'text-white');
+            document.getElementById('global-filter').style.display = (pagina === 'equipe' || pagina === 'ponto') ? 'none' : 'flex';
+            if (window.innerWidth < 768 && !document.getElementById('overlay-menu').classList.contains('hidden')) { toggleMenu(); }
+            
+            // Gatilhos de carregamento sob demanda
+            if (pagina === 'ponto') loadPontoAdmin();
+            if (pagina === 'clientes') loadClientes();
+            if (pagina === 'fornecedores') loadFornecedores();
+        }
 
         function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -468,15 +474,37 @@
             }
             carregarDadosGlobais();
         }
+        
         function getQueryString() { return (dataInicioGlobal && dataFimGlobal) ? `?inicio=${dataInicioGlobal}&fim=${dataFimGlobal}` : ''; }
+        
         function carregarDadosGlobais() { 
-    loadDashboard(); 
-    loadFinanceiro(); 
-    loadOS(); 
-    loadClientesFornecedores();
-    loadClientes();      
-    loadFornecedores();  
-}
+            loadDashboard(); 
+            loadFinanceiro(); 
+            loadOS(); 
+            loadClientesFornecedores();
+            loadClientes();      
+            loadFornecedores();  
+        }
+
+        // --- MOTOR DE EXCLUSÃO GENÉRICO ---
+        async function deletarItem(rota, id) {
+            if(!confirm("⚠️ ATENÇÃO: Esta ação é irreversível. Tem certeza que deseja apagar este registro permanentemente?")) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/${rota}/${id}`, { method: 'DELETE' });
+                if(res.ok) {
+                    if(rota === 'os') loadOS();
+                    else if(rota === 'financeiro') { loadFinanceiro(); loadDashboard(); }
+                    else if(rota === 'usuarios') loadEquipe();
+                    else if(rota === 'clientes') { loadClientes(); loadClientesFornecedores(); }
+                    else if(rota === 'fornecedores') { loadFornecedores(); loadClientesFornecedores(); }
+                } else {
+                    alert("Erro interno ao tentar excluir o registro.");
+                }
+            } catch(e) {
+                alert("Erro de comunicação com o servidor.");
+            }
+        }
 
         // --- LOGIN ---
         async function realizarLogin(e) {
@@ -526,30 +554,16 @@
             const tipo = (document.getElementById('txt-ponto-status').innerText === "EM SERVIÇO") ? "Saída" : "Entrada";
             if (!confirm(`Registar ${tipo}?`)) return;
 
-            // --- LÓGICA DE HORA EXTRA (HE) ---
             let is_he = "Não";
             let motivo_he = "";
             const hj = new Date();
-            const diaSemana = hj.getDay(); // 0 = Domingo, 6 = Sábado
+            const diaSemana = hj.getDay(); 
             const hora = hj.getHours();
-
-            // 1. FORMATAR A DATA DE HOJE (Ex: "01/05" ou "25/12")
             const diaMes = String(hj.getDate()).padStart(2, '0') + '/' + String(hj.getMonth() + 1).padStart(2, '0');
 
-            // 2. LISTA DE FERIADOS NACIONAIS FIXOS
-            const feriados = [
-                "01/01", // Ano Novo
-                "21/04", // Tiradentes
-                "01/05", // Dia do Trabalhador
-                "07/09", // Independência
-                "12/10", // Nossa Sra. Aparecida
-                "02/11", // Finados
-                "15/11", // Proclamação da República
-                "25/12"  // Natal
-            ];
+            const feriados = ["01/01", "21/04", "01/05", "07/09", "12/10", "02/11", "15/11", "25/12"];
             const isFeriado = feriados.includes(diaMes);
 
-            // Regra: Final de semana OU Feriado OU antes das 08h OU depois das 18h
             if (diaSemana === 0 || diaSemana === 6 || isFeriado || hora < 8 || hora >= 18) {
                 const resp = prompt(`Você está registrando ponto fora do horário padrão ou em um feriado.\n\nIsto é uma Hora Extra (HE)?\nSe SIM, digite o motivo abaixo.\nSe NÃO, apenas clique em OK deixando em branco:`);
                 if (resp && resp.trim() !== "") {
@@ -587,111 +601,64 @@
         }
 
         // --- DASHBOARD ---
-async function loadDashboard() {
-    const res = await fetch(`${API_URL}/dashboard${getQueryString()}`); 
-    const data = await res.json();
-    
-    document.getElementById('dash-in').innerText = formatMoeda(data.faturamento_global);
-    document.getElementById('dash-out').innerText = formatMoeda(data.despesas_globais);
-    document.getElementById('dash-total').innerText = formatMoeda(data.faturamento_global - data.despesas_globais);
-    document.getElementById('dash-os').innerText = data.total_os;
-    
-    // Gráfico de Rosca (OS)
-    const ctxOs = document.getElementById('chartOS').getContext('2d');
-    if(chartOs) chartOs.destroy();
-    
-    const chavesOS = Object.keys(data.grafico_os);
-    const valoresOS = Object.values(data.grafico_os);
-    
-    // 1. Legenda com as contagens dinâmicas
-    const labelsOS = chavesOS.map((chave, i) => `${chave} (${valoresOS[i]})`);
-    
-    // 2. Cores fixas para manter a consistência visual
-    const coresMapa = { 'Pendente': '#f59e0b', 'Em Execução': '#3b82f6', 'Concluído': '#10b981', 'Cancelada': '#ef4444' };
-    const coresOS = chavesOS.map(chave => coresMapa[chave] || '#94a3b8');
+        async function loadDashboard() {
+            const res = await fetch(`${API_URL}/dashboard${getQueryString()}`); 
+            const data = await res.json();
+            
+            document.getElementById('dash-in').innerText = formatMoeda(data.faturamento_global);
+            document.getElementById('dash-out').innerText = formatMoeda(data.despesas_globais);
+            document.getElementById('dash-total').innerText = formatMoeda(data.faturamento_global - data.despesas_globais);
+            document.getElementById('dash-os').innerText = data.total_os;
+            
+            const ctxOs = document.getElementById('chartOS').getContext('2d');
+            if(chartOs) chartOs.destroy();
+            
+            const chavesOS = Object.keys(data.grafico_os);
+            const valoresOS = Object.values(data.grafico_os);
+            const labelsOS = chavesOS.map((chave, i) => `${chave} (${valoresOS[i]})`);
+            const coresMapa = { 'Pendente': '#f59e0b', 'Em Execução': '#3b82f6', 'Concluído': '#10b981', 'Cancelada': '#ef4444' };
+            const coresOS = chavesOS.map(chave => coresMapa[chave] || '#94a3b8');
 
-    chartOs = new Chart(ctxOs, { 
-        type: 'doughnut', 
-        data: { 
-            labels: labelsOS, 
-            datasets: [{ data: valoresOS, backgroundColor: coresOS, borderWidth: 0, hoverOffset: 6 }] 
-        }, 
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-                legend: { 
-                    position: 'right', // Joga a legenda pra direita pra ler os números melhor
-                    labels: { color: '#94a3b8', font: { size: 12, weight: 'bold' }, padding: 20 } 
+            chartOs = new Chart(ctxOs, { 
+                type: 'doughnut', 
+                data: { labels: labelsOS, datasets: [{ data: valoresOS, backgroundColor: coresOS, borderWidth: 0, hoverOffset: 6 }] }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 12, weight: 'bold' }, padding: 20 } } },
+                    onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            document.getElementById('filtro-status-os').value = chavesOS[index];
+                            navegar('os'); loadOS();
+                        }
+                    }
                 } 
-            },
-            // Muda o cursor para "mãozinha" ao passar por cima
-            onHover: (event, chartElement) => {
-                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-            },
-            // A mágica do Clique
-            onClick: (event, elements) => {
-                if (elements.length > 0) {
-                    const index = elements[0].index;
-                    const statusClicado = chavesOS[index]; // Pega o nome do status (ex: Pendente)
-                    
-                    // Viaja para a tela de OS, muda o select e carrega a tabela
-                    document.getElementById('filtro-status-os').value = statusClicado;
-                    navegar('os');
-                    loadOS();
-                }
-            }
-        } 
-    });
+            });
 
-    // Novo Gráfico de Linhas (Financeiro)
-    const ctxFin = document.getElementById('chartFin').getContext('2d');
-    if(chartFin) chartFin.destroy();
-    
-    // Formata as datas (de YYYY-MM-DD para o formato BR legível)
-    const datasFormatadas = data.grafico_fin.datas.map(d => {
-        const [ano, mes, dia] = d.split('-');
-        return `${dia}/${mes}`;
-    });
+            const ctxFin = document.getElementById('chartFin').getContext('2d');
+            if(chartFin) chartFin.destroy();
+            
+            const datasFormatadas = data.grafico_fin.datas.map(d => { const [ano, mes, dia] = d.split('-'); return `${dia}/${mes}`; });
 
-    chartFin = new Chart(ctxFin, {
-        type: 'line',
-        data: {
-            labels: datasFormatadas,
-            datasets: [
-                {
-                    label: 'Receitas',
-                    data: data.grafico_fin.receitas,
-                    borderColor: '#10b981', // Verde
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
+            chartFin = new Chart(ctxFin, {
+                type: 'line',
+                data: {
+                    labels: datasFormatadas,
+                    datasets: [
+                        { label: 'Receitas', data: data.grafico_fin.receitas, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, tension: 0.3, fill: true },
+                        { label: 'Despesas', data: data.grafico_fin.despesas, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, tension: 0.3, fill: true }
+                    ]
                 },
-                {
-                    label: 'Despesas',
-                    data: data.grafico_fin.despesas,
-                    borderColor: '#ef4444', // Vermelho
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } }
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#94a3b8' } } },
-            scales: {
-                x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
-            }
+            });
         }
-    });
-}
 
-        // --- FINANCEIRO (COM AÇÃO RÁPIDA DE PAGAMENTO) ---
+        // --- FINANCEIRO ---
         async function loadFinanceiro() {
             const res = await fetch(`${API_URL}/financeiro${getQueryString()}`); 
             arrayFinanceiro = await res.json();
@@ -705,10 +672,11 @@ async function loadDashboard() {
                         <span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span> / NF: ${f.status_nf}
                     </td>
                     <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-500'}"></i></td>
-                    <td class="p-4 text-center flex justify-center items-center mt-2">
-                        ${f.status_pagamento !== 'Pago' ? `<button onclick="marcarComoPago(${f.id})" class="text-slate-400 hover:text-emerald-500 mr-3 transform hover:scale-110 transition" title="Dar baixa (Marcar como Pago)"><i class="fa-solid fa-circle-check text-lg"></i></button>` : ''}
-                        <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 mr-3 transform hover:scale-110 transition" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
+                    <td class="p-4 text-center flex justify-center items-center mt-2 gap-3">
+                        ${f.status_pagamento !== 'Pago' ? `<button onclick="marcarComoPago(${f.id})" class="text-slate-400 hover:text-emerald-500 transform hover:scale-110 transition" title="Dar baixa"><i class="fa-solid fa-circle-check text-lg"></i></button>` : ''}
+                        <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 transform hover:scale-110 transition" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
                         <button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deletarItem('financeiro', ${f.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>`).join('');
         }
@@ -723,10 +691,7 @@ async function loadDashboard() {
             document.getElementById('fin-id').value=f.id; 
             document.getElementById('fin-empresa').value=f.empresa; 
             document.getElementById('fin-desc').value=f.descricao; 
-            
-            // Aqui aplicamos o formato BR (ex: 4.656,00) de volta no input
             document.getElementById('fin-valor').value = f.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
-            
             document.getElementById('fin-tipo').value=f.tipo; 
             document.getElementById('fin-categoria').value=f.categoria; 
             document.getElementById('fin-status-pgto').value=f.status_pagamento; 
@@ -743,8 +708,6 @@ async function loadDashboard() {
 
         async function salvarFinanceiro(e) {
             e.preventDefault(); const id = document.getElementById('fin-id').value;
-            
-            // Removemos os pontos e trocamos a vírgula por ponto para o banco de dados entender
             const valorRaw = document.getElementById('fin-valor').value.replace(/\./g, '').replace(',', '.');
             
             const payload = { 
@@ -774,37 +737,35 @@ async function loadDashboard() {
 
         // --- OS ---
         async function loadOS() {
-    const res = await fetch(`${API_URL}/os`); 
-    arrayOS = await res.json();
-    
-    // Captura o valor do novo filtro
-    const filtro = document.getElementById('filtro-status-os') ? document.getElementById('filtro-status-os').value : "";
-    
-    // Filtra a lista se algum status estiver selecionado
-    let dadosFiltrados = arrayOS;
-    if (filtro !== "") {
-        dadosFiltrados = arrayOS.filter(o => o.status === filtro);
-    }
+            const res = await fetch(`${API_URL}/os`); 
+            arrayOS = await res.json();
+            
+            const filtro = document.getElementById('filtro-status-os') ? document.getElementById('filtro-status-os').value : "";
+            let dadosFiltrados = arrayOS;
+            if (filtro !== "") dadosFiltrados = arrayOS.filter(o => o.status === filtro);
 
-    document.getElementById('tb-os').innerHTML = dadosFiltrados.map(o => `
-        <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
-            <td class="p-4 text-xs">${formatData(o.data_programada)}</td>
-            <td class="p-4 text-brand font-bold">${o.numero_os}</td>
-            <td class="p-4 text-white">${o.cliente}</td>
-            <td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
-            <td class="p-4"><span class="text-[10px] uppercase font-bold text-brand">${o.status}</span></td>
-            <td class="p-4 text-center"><button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
-        </tr>`).join('');
-}
+            document.getElementById('tb-os').innerHTML = dadosFiltrados.map(o => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
+                    <td class="p-4 text-xs">${formatData(o.data_programada)}</td>
+                    <td class="p-4 text-brand font-bold">${o.numero_os}</td>
+                    <td class="p-4 text-white">${o.cliente}</td>
+                    <td class="p-4 text-xs text-slate-400">${o.tecnico}</td>
+                    <td class="p-4"><span class="text-[10px] uppercase font-bold text-brand">${o.status}</span></td>
+                    <td class="p-4 text-center flex justify-center gap-3">
+                        <button onclick="editarOS(${o.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deletarItem('os', ${o.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`).join('');
+        }
 
         function abrirNovaOS() { 
             document.getElementById('os-id').value=""; 
             document.getElementById('os-numero').value=""; 
-            document.getElementById('os-cliente').value=""; // Agora é select
+            document.getElementById('os-cliente').value="";
             document.getElementById('os-endereco').value=""; 
             document.getElementById('os-plataforma').value=""; 
             document.getElementById('os-desc').value=""; 
-            document.getElementById('os-orientacoes').value=""; // Novo
+            document.getElementById('os-orientacoes').value="";
             document.getElementById('os-arquivos-list').innerHTML=""; 
             abrirModal('modal-os'); 
         }
@@ -814,11 +775,11 @@ async function loadDashboard() {
             document.getElementById('os-id').value=o.id; 
             document.getElementById('os-empresa').value=o.empresa; 
             document.getElementById('os-numero').value=o.numero_os; 
-            document.getElementById('os-cliente').value=o.id_cliente || ""; // Carrega pelo ID
+            document.getElementById('os-cliente').value=o.id_cliente || ""; 
             document.getElementById('os-endereco').value=o.endereco; 
             document.getElementById('os-plataforma').value=o.plataforma; 
             document.getElementById('os-desc').value=o.servico_descricao; 
-            document.getElementById('os-orientacoes').value=o.orientacoes_admin || ""; // Carrega orientações
+            document.getElementById('os-orientacoes').value=o.orientacoes_admin || ""; 
             document.getElementById('os-tecnico').value=o.id_tecnico; 
             document.getElementById('os-status').value=o.status; 
             if(o.data_programada) document.getElementById('os-data').value = o.data_programada;
@@ -838,12 +799,12 @@ async function loadDashboard() {
             const payload = { 
                 empresa: document.getElementById('os-empresa').value, 
                 numero_os: document.getElementById('os-numero').value, 
-                cliente: nomeCliente, // Nome visível na tela
-                id_cliente: idClienteVal, // ID relacional no banco
+                cliente: nomeCliente, 
+                id_cliente: idClienteVal, 
                 endereco: document.getElementById('os-endereco').value, 
                 plataforma: document.getElementById('os-plataforma').value, 
                 servico_descricao: document.getElementById('os-desc').value, 
-                orientacoes_admin: document.getElementById('os-orientacoes').value, // Nova coluna
+                orientacoes_admin: document.getElementById('os-orientacoes').value,
                 id_tecnico: parseInt(document.getElementById('os-tecnico').value), 
                 data_programada: document.getElementById('os-data').value, 
                 status: document.getElementById('os-status').value 
@@ -870,8 +831,7 @@ async function loadDashboard() {
                     await fetch(`${API_URL}/upload/documentos/${id ? id : data.id}`, { method: 'POST', body: fData }); 
                 }
                 
-                fecharModal('modal-os'); 
-                loadOS();
+                fecharModal('modal-os'); loadOS();
             } catch(err) {
                 console.error("Falha na comunicação: ", err);
                 alert("Erro fatal ao salvar OS. Verifique a conexão.");
@@ -885,7 +845,10 @@ async function loadDashboard() {
                 <tr class="border-b border-slate-700/50">
                     <td class="p-4 text-white">${u.nome}</td><td class="p-4 text-slate-400">${u.usuario}</td>
                     <td class="p-4 text-[10px] uppercase font-bold text-brand">${u.perfil}</td>
-                    <td class="p-4 text-center"><button onclick="editarUser(${u.id})" class="text-slate-400 hover:text-brand"><i class="fa-solid fa-pen"></i></button></td>
+                    <td class="p-4 text-center flex justify-center gap-3">
+                        <button onclick="editarUser(${u.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deletarItem('usuarios', ${u.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 </tr>`).join('');
         }
         function abrirNovoUser() { document.getElementById('usr-id').value=""; document.getElementById('usr-nome').value=""; document.getElementById('usr-email').value=""; document.getElementById('usr-login').value=""; document.getElementById('usr-senha').value=""; document.getElementById('senha-hint').classList.add('hidden'); document.getElementById('login-field-container').classList.remove('hidden'); abrirModal('modal-user'); }
@@ -924,11 +887,10 @@ async function loadDashboard() {
                         <div id="corpo-os-${o.id}" class="hidden border-t border-slate-800 bg-slate-900/30 p-4">
                             <p class="text-xs text-slate-400 bg-slate-800/50 p-3 rounded border border-slate-700 mb-4">${o.servico_descricao}</p>
                             ${o.orientacoes_admin ? `
-    <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4 shadow-inner">
-        <p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Orientações da Base</p>
-        <p class="text-xs text-slate-300 font-medium">${o.orientacoes_admin}</p>
-    </div>
-` : ''}
+                            <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4 shadow-inner">
+                                <p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Orientações da Base</p>
+                                <p class="text-xs text-slate-300 font-medium">${o.orientacoes_admin}</p>
+                            </div>` : ''}
                             <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Relatório Técnico</label>
                             <textarea id="relatorio-${o.id}" class="w-full bg-slate-800 text-white rounded-lg p-3 text-xs mb-3 border border-slate-700 focus:border-brand outline-none transition" rows="3" placeholder="Descreva o que foi feito...">${o.relatorio_tecnico || ''}</textarea>
                             
@@ -955,129 +917,73 @@ async function loadDashboard() {
         async function atualizarStatusOS(id) { await fetch(`${API_URL}/os/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: document.getElementById(`status-${id}`).value, relatorio_tecnico: document.getElementById(`relatorio-${id}`).value }) }); alert("Salvo!"); loadTechWeekView(); }
         async function enviarEvidencias(id) { const fileInput = document.getElementById(`evidencias-${id}`); if(fileInput.files.length === 0) return alert("Selecione fotos!"); const fData = new FormData(); for(let i=0; i<fileInput.files.length; i++) fData.append("arquivos", fileInput.files[i]); await fetch(`${API_URL}/upload/evidencias/${id}`, { method: 'POST', body: fData }); alert("Fotos enviadas!"); fileInput.value = ""; }
 
-        // --- NOVAS FUNÇÕES DA CONTABILIDADE (FASE 2) ---
-        function exportarFechamento() {
-            // Usa o filtro de datas global atual para gerar o PDF
-            const urlPDF = `${API_URL}/relatorio/financeiro/pdf${getQueryString()}`;
-            window.open(urlPDF, '_blank');
-        }
+        function exportarFechamento() { window.open(`${API_URL}/relatorio/financeiro/pdf${getQueryString()}`, '_blank'); }
 
         async function previewComprovante(id) {
             try {
                 const res = await fetch(`${API_URL}/arquivos/comprovantes/${id}`);
                 const data = await res.json();
-                
-                if (data.arquivos && data.arquivos.length > 0) {
-                    // Abre o primeiro arquivo anexado em uma nova guia
-                    const urlArquivo = `${API_URL}/download/comprovantes/${id}/${data.arquivos[0]}`;
-                    window.open(urlArquivo, '_blank');
-                } else {
-                    alert("Nenhum comprovante ou NF anexado a este lançamento.");
-                }
-            } catch (err) {
-                alert("Erro ao buscar o comprovante.");
-            }
+                if (data.arquivos && data.arquivos.length > 0) window.open(`${API_URL}/download/comprovantes/${id}/${data.arquivos[0]}`, '_blank');
+                else alert("Nenhum comprovante ou NF anexado a este lançamento.");
+            } catch (err) { alert("Erro ao buscar o comprovante."); }
         }
 
-        // --- ANIMAÇÃO DOS CARDS DO TÉCNICO ---
         function toggleOS(id) {
             const corpo = document.getElementById(`corpo-os-${id}`);
             const icone = document.getElementById(`icone-os-${id}`);
-            
-            if (corpo.classList.contains('hidden')) {
-                corpo.classList.remove('hidden');
-                icone.classList.add('rotate-180'); // Vira a setinha pra cima
-            } else {
-                corpo.classList.add('hidden');
-                icone.classList.remove('rotate-180'); // Vira a setinha pra baixo
-            }
+            if (corpo.classList.contains('hidden')) { corpo.classList.remove('hidden'); icone.classList.add('rotate-180'); } 
+            else { corpo.classList.add('hidden'); icone.classList.remove('rotate-180'); }
         }
 
         async function marcarComoPago(id) {
             if(!confirm("Dar baixa neste lançamento com a data de HOJE?")) return;
-            
-            // Acha o lançamento na memória
-            const f = arrayFinanceiro.find(x => x.id == id); 
-            if(!f) return;
-            
-            // Prepara o pacote mantendo tudo igual, mas forçando o status para Pago e a data de pagamento para hoje
+            const f = arrayFinanceiro.find(x => x.id == id); if(!f) return;
             const payload = { 
-                empresa: f.empresa, 
-                descricao: f.descricao, 
-                valor: parseFloat(f.valor), 
-                tipo: f.tipo, 
-                categoria: f.categoria, 
-                status_pagamento: "Pago", 
-                status_nf: f.status_nf, 
-                data_emissao: f.data_emissao || null, 
-                data_pagamento: getStrDate(new Date()), // Automático: Hoje
-                id_os: f.id_os || null, 
-                conciliado: f.conciliado || "Não" 
+                empresa: f.empresa, descricao: f.descricao, valor: parseFloat(f.valor), 
+                tipo: f.tipo, categoria: f.categoria, status_pagamento: "Pago", status_nf: f.status_nf, 
+                data_emissao: f.data_emissao || null, data_pagamento: getStrDate(new Date()), 
+                id_os: f.id_os || null, conciliado: f.conciliado || "Não" 
             };
-            
             try {
-                // Manda pro backend usando a mesma rota de edição
-                await fetch(`${API_URL}/financeiro/${id}`, { 
-                    method: 'PUT', 
-                    headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify(payload) 
-                });
-                
-                // Recarrega a tabela e o painel inicial para os números do gráfico atualizarem!
-                loadFinanceiro(); 
-                loadDashboard(); 
-            } catch(e) {
-                alert("Erro ao confirmar pagamento.");
-            }
+                await fetch(`${API_URL}/financeiro/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                loadFinanceiro(); loadDashboard(); 
+            } catch(e) { alert("Erro ao confirmar pagamento."); }
         }
 
-        // --- MÁSCARA DE MOEDA BRASILEIRA ---
         function formatarMoedaInput(input) {
-            let v = input.value.replace(/\D/g, ''); // Remove tudo que não é número
+            let v = input.value.replace(/\D/g, ''); 
             if(v === '') { input.value = ''; return; }
-            
-            v = (v / 100).toFixed(2) + '';
-            v = v.replace(".", ",");
-            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-            v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
-            
+            v = (v / 100).toFixed(2) + ''; v = v.replace(".", ",");
+            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,"); v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
             input.value = v;
         }
 
         function toggleEntidadeFinanceiro() {
-    const tipo = document.getElementById('fin-tipo').value;
-    if(tipo === 'Entrada') {
-        document.getElementById('box-fin-cliente').classList.remove('hidden');
-        document.getElementById('box-fin-fornecedor').classList.add('hidden');
-        document.getElementById('fin-fornecedor').value = ""; // Limpa fornecedor
-    } else {
-        document.getElementById('box-fin-cliente').classList.add('hidden');
-        document.getElementById('box-fin-fornecedor').classList.remove('hidden');
-        document.getElementById('fin-cliente').value = ""; // Limpa cliente
-    }
-}
-
-async function loadClientesFornecedores() {
-            try {
-                const resC = await fetch(`${API_URL}/clientes`); 
-                const arrayClientes = await resC.json();
-                
-                const resF = await fetch(`${API_URL}/fornecedores`); 
-                const arrayFornecedores = await resF.json();
-
-                const optsC = `<option value="">Selecione um Cliente...</option>` + arrayClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-                const optsF = `<option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option>` + arrayFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
-
-                if(document.getElementById('os-cliente')) document.getElementById('os-cliente').innerHTML = optsC;
-                if(document.getElementById('fin-cliente')) document.getElementById('fin-cliente').innerHTML = optsC;
-                if(document.getElementById('fin-fornecedor')) document.getElementById('fin-fornecedor').innerHTML = optsF;
-            } catch(e) { 
-                console.log("Aguardando cadastro de entidades."); 
+            const tipo = document.getElementById('fin-tipo').value;
+            if(tipo === 'Entrada') {
+                document.getElementById('box-fin-cliente').classList.remove('hidden');
+                document.getElementById('box-fin-fornecedor').classList.add('hidden');
+                document.getElementById('fin-fornecedor').value = "";
+            } else {
+                document.getElementById('box-fin-cliente').classList.add('hidden');
+                document.getElementById('box-fin-fornecedor').classList.remove('hidden');
+                document.getElementById('fin-cliente').value = "";
             }
         }
 
+        async function loadClientesFornecedores() {
+            try {
+                const resC = await fetch(`${API_URL}/clientes`); const arrayClientes = await resC.json();
+                const resF = await fetch(`${API_URL}/fornecedores`); const arrayFornecedores = await resF.json();
+                const optsC = `<option value="">Selecione um Cliente...</option>` + arrayClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+                const optsF = `<option value="">Selecione um Fornecedor...</option><option value="0">Outros / Avulso</option>` + arrayFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+                if(document.getElementById('os-cliente')) document.getElementById('os-cliente').innerHTML = optsC;
+                if(document.getElementById('fin-cliente')) document.getElementById('fin-cliente').innerHTML = optsC;
+                if(document.getElementById('fin-fornecedor')) document.getElementById('fin-fornecedor').innerHTML = optsF;
+            } catch(e) { console.log("Aguardando cadastro de entidades."); }
+        }
 
-        // --- GESTÃO DE CLIENTES ---
+        // --- GESTÃO DE CLIENTES E FORNECEDORES ---
         let arrayClientesFull = [];
         async function loadClientes() {
             const res = await fetch(`${API_URL}/clientes`); arrayClientesFull = await res.json();
@@ -1086,13 +992,15 @@ async function loadClientesFornecedores() {
                     <td class="p-4 text-white font-bold">${c.nome}</td>
                     <td class="p-4 text-slate-400 text-xs">${c.telefone || '-'}<br>${c.email || '-'}</td>
                     <td class="p-4 text-slate-400 text-xs">${c.cnpj_cpf || '-'}</td>
-                    <td class="p-4 text-center"><button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button></td>
+                    <td class="p-4 text-center flex justify-center gap-3">
+                        <button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deletarItem('clientes', ${c.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 </tr>`).join('');
         }
         function abrirNovoCliente() { document.getElementById('cli-id').value=""; document.getElementById('cli-nome').value=""; document.getElementById('cli-cnpj').value=""; document.getElementById('cli-telefone').value=""; document.getElementById('cli-email').value=""; document.getElementById('cli-endereco').value=""; abrirModal('modal-cliente'); }
         async function salvarCliente(e) { e.preventDefault(); const p = { nome: document.getElementById('cli-nome').value, email: document.getElementById('cli-email').value, telefone: document.getElementById('cli-telefone').value, cnpj_cpf: document.getElementById('cli-cnpj').value, endereco: document.getElementById('cli-endereco').value }; await fetch(`${API_URL}/clientes`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-cliente'); loadClientes(); loadClientesFornecedores(); }
 
-        // --- GESTÃO DE FORNECEDORES ---
         let arrayFornecedoresFull = [];
         async function loadFornecedores() {
             const res = await fetch(`${API_URL}/fornecedores`); arrayFornecedoresFull = await res.json();
@@ -1101,13 +1009,14 @@ async function loadClientesFornecedores() {
                     <td class="p-4 text-white font-bold">${f.nome}</td>
                     <td class="p-4"><span class="text-[10px] uppercase font-bold text-emerald-500">${f.categoria || '-'}</span></td>
                     <td class="p-4 text-slate-400 text-xs">${f.telefone || '-'}<br>${f.email || '-'}</td>
-                    <td class="p-4 text-center"><button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button></td>
+                    <td class="p-4 text-center flex justify-center gap-3">
+                        <button class="text-slate-500 cursor-not-allowed" title="Edição em breve"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deletarItem('fornecedores', ${f.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 </tr>`).join('');
         }
         function abrirNovoFornecedor() { document.getElementById('for-id').value=""; document.getElementById('for-nome').value=""; document.getElementById('for-cnpj').value=""; document.getElementById('for-telefone').value=""; document.getElementById('for-email').value=""; abrirModal('modal-fornecedor'); }
         async function salvarFornecedor(e) { e.preventDefault(); const p = { nome: document.getElementById('for-nome').value, email: document.getElementById('for-email').value, telefone: document.getElementById('for-telefone').value, cnpj_cpf: document.getElementById('for-cnpj').value, categoria: document.getElementById('for-categoria').value }; await fetch(`${API_URL}/fornecedores`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) }); fecharModal('modal-fornecedor'); loadFornecedores(); loadClientesFornecedores(); }
-
-
     </script>
 </body>
 </html>
