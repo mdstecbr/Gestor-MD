@@ -158,6 +158,25 @@ class OSRequest(BaseModel):
 # Inicializa as tabelas e colunas no Neon ao ligar o servidor
 database.inicializar_banco()
 
+@app.get("/api/debug/osrequest")
+def debug_osrequest():
+    """
+    Rota de Raio-X: Mostra exatamente quais campos o servidor 
+    está reconhecendo dentro da classe OSRequest neste exato momento.
+    """
+    try:
+        # Tenta listar os campos (Pydantic V2)
+        campos = list(OSRequest.model_fields.keys())
+    except AttributeError:
+        # Fallback para Pydantic V1
+        campos = list(OSRequest.__fields__.keys())
+        
+    return {
+        "status": "diagnostico_concluido",
+        "ambiente": "Render",
+        "campos_reconhecidos_pelo_servidor": campos
+    }
+
     # --- ROTAS DE CLIENTES E FORNECEDORES ---
 @app.get("/api/clientes")
 def listar_clientes():
