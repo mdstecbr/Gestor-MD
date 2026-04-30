@@ -249,16 +249,27 @@ def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None):
 @app.get("/api/financeiro")
 def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None):
     with database.conectar() as conn:
-        query = "SELECT * FROM financeiro"
+        # Tática de Engenharia: LEFT JOIN para trazer os nomes reais das entidades
+        query = """
+            SELECT f.*, 
+                   c.nome as nome_cliente, 
+                   fo.nome as nome_fornecedor 
+            FROM financeiro f
+            LEFT JOIN clientes c ON f.id_cliente = c.id
+            LEFT JOIN fornecedores fo ON f.id_fornecedor = fo.id
+        """
         params = {}
         
         if inicio and fim:
-            query += " WHERE date(COALESCE(data_pagamento, data_registro)) BETWEEN :i AND :f"
+            # Filtra considerando a data de pagamento ou a data de registro
+            query += " WHERE date(COALESCE(f.data_pagamento, f.data_registro)) BETWEEN :i AND :f"
             params = {"i": inicio, "f": fim}
             
-        query += " ORDER BY id DESC"
+        query += " ORDER BY f.id DESC"
         df = pd.read_sql_query(text(query), conn, params=params)
         
+    # Converte valores nulos (NaN) do Pandas para None (null do JSON) para não quebrar o frontend
+    df = df.where(pd.notnull(df), None)
     return df.to_dict(orient="records")
 
 # --- NOVO LANÇAMENTO FINANCEIRO ---
