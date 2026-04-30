@@ -517,13 +517,18 @@ def ponto_status(id_tecnico: int):
 @app.get("/api/ponto/admin")
 def list_ponto():
     with database.conectar() as conn:
+        # Tática de Engenharia: LEFT JOIN garante a exibição do histórico mesmo se o usuário for deletado
         query = """
-            SELECT p.*, u.nome as tecnico 
+            SELECT p.*, COALESCE(u.nome, 'Técnico Excluído (Inativo)') as tecnico 
             FROM registro_ponto p 
-            JOIN usuarios u ON p.id_tecnico = u.id 
+            LEFT JOIN usuarios u ON p.id_tecnico = u.id 
             ORDER BY p.id DESC LIMIT 200
         """
         df = pd.read_sql_query(text(query), conn)
+        
+    # Tratamento de dados para evitar quebra no Frontend caso hajam valores nulos
+    df = df.where(pd.notnull(df), None)
+    
     return df.to_dict(orient="records")
 
 
