@@ -374,21 +374,26 @@ def listar_fornecedores(usuario_logado: dict = Depends(token_valido)):
 
 @app.post("/api/fornecedores")
 def criar_fornecedor(req: FornecedorRequest, usuario_logado: dict = Depends(token_valido)):
-    with database.conectar() as conn:
-        conn.execute(text("""
-            INSERT INTO fornecedores (empresa, nome, email, telefone, cnpj_cpf, categoria) 
-            VALUES (:emp, :n, :e, :t, :c, :cat)
-        """), 
-        {
-            "emp": req.empresa, # <-- NOVO CAMPO
-            "n": req.nome, 
-            "e": req.email, 
-            "t": req.telefone, 
-            "c": req.cnpj_cpf, 
-            "cat": req.categoria
-        })
-        conn.commit()
-    return {"status": "ok"}
+    try:
+        with database.conectar() as conn:
+            conn.execute(text("""
+                INSERT INTO fornecedores (empresa, nome, email, telefone, cnpj_cpf, categoria) 
+                VALUES (:emp, :n, :e, :t, :c, :cat)
+            """), 
+            {
+                "emp": req.empresa, 
+                "n": req.nome, 
+                "e": req.email, 
+                "t": req.telefone, 
+                "c": req.cnpj_cpf, 
+                "cat": req.categoria
+            })
+            conn.commit()
+        return {"status": "ok"}
+    except Exception as e:
+        # Tática Comercial: Grava no console do servidor e devolve o erro pro Frontend
+        print(f"❌ ERRO CRÍTICO AO SALVAR FORNECEDOR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro no banco de dados: {str(e)}")
 
 @app.get("/api/os")
 def list_os(usuario_logado: dict = Depends(token_valido)):

@@ -792,20 +792,36 @@
         
         async function salvarFornecedor(e) { 
             e.preventDefault(); 
+            
             const p = { 
-                empresa: document.getElementById('for-empresa').value, // Captura a empresa
+                empresa: document.getElementById('for-empresa').value, 
                 nome: document.getElementById('for-nome').value, 
                 email: document.getElementById('for-email').value, 
                 telefone: document.getElementById('for-telefone').value, 
                 cnpj_cpf: document.getElementById('for-cnpj').value, 
                 categoria: document.getElementById('for-categoria').value 
             }; 
-            await fetchAPI(`/fornecedores`, { method: 'POST', body: JSON.stringify(p) }); 
-            fecharModal('modal-fornecedor'); 
-            loadFornecedores(); 
-            loadClientesFornecedores(); 
+            
+            try {
+                // Tática Comercial: Aguarda e verifica a resposta do servidor
+                const res = await fetchAPI(`/fornecedores`, { method: 'POST', body: JSON.stringify(p) }); 
+                
+                if (res.ok) {
+                    fecharModal('modal-fornecedor'); 
+                    loadFornecedores(); 
+                    loadClientesFornecedores(); 
+                } else {
+                    // Se o Python estourar aquele erro 500 que configuramos acima, ele cai aqui:
+                    const err = await res.json();
+                    alert("Falha ao salvar no banco de dados!\n\nDetalhes: " + (err.detail || "Erro desconhecido."));
+                    console.error("DEBUG DA API:", err);
+                }
+            } catch (err) {
+                alert("Servidor offline ou falha de rede.");
+                console.error(err);
+            }
         }
-        
+
     </script>
 </body>
 </html>
