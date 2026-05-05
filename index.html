@@ -712,26 +712,70 @@
         async function salvarUsuario(e) { e.preventDefault(); const id = document.getElementById('usr-id').value; const p = { nome: document.getElementById('usr-nome').value, email: document.getElementById('usr-email').value, usuario: document.getElementById('usr-login').value, senha: document.getElementById('usr-senha').value, perfil: document.getElementById('usr-perfil').value }; try { await fetchAPI(id ? `/usuarios/${id}` : `/usuarios`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(p) }); fecharModal('modal-user'); loadEquipe(); } catch(err) { alert("Erro de comunicação."); } }
         async function carregarDropdownTecnicos() { const res = await fetchAPI(`/tecnicos`); const data = await res.json(); document.getElementById('os-tecnico').innerHTML = data.map(t => `<option value="${t.id}">${t.nome}</option>`).join(''); }
 
+        // ==========================================
+        // --- MOTOR DE PONTO E GPS (SISTEMA BLINDADO)
+        // ==========================================
+
         async function atualizarStatusPontoUI() {
-            const res = await fetchAPI(`/ponto/status/${id_usuario_logado}`); const data = await res.json();
-            const btn = document.getElementById('btn-ponto'); const txt = document.getElementById('txt-ponto-status');
-            if (data.ultimo_registro === 'Entrada') { txt.innerText = "EM SERVIÇO"; txt.className = "text-emerald-400 font-black"; btn.innerText = "ENCERRAR DIA"; btn.className = "bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; } 
-            else { txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black"; btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; }
+            try {
+                const res = await fetchAPI(`/ponto/status/${id_usuario_logado}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const btn = document.getElementById('btn-ponto');
+                    const txt = document.getElementById('txt-ponto-status');
+                    
+                    if (data.ultimo_registro === 'Entrada') { 
+                        txt.innerText = "EM SERVIÇO"; 
+                        txt.className = "text-emerald-400 font-black"; 
+                        btn.innerText = "ENCERRAR DIA"; 
+                        btn.className = "bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; 
+                    } else { 
+                        txt.innerText = "FORA DE SERVIÇO"; 
+                        txt.className = "text-slate-500 font-black"; 
+                        btn.innerText = "INICIAR DIA"; 
+                        btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; 
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao atualizar botão:", e);
+            }
         }
 
-        // --- MOTOR DE PONTO E GPS (VERSÃO BLINDADA) ---
+        async function enviarPonto(tipo, lat, lng, is_he, motivo_he) {
+            const payload = { 
+                id_tecnico: id_usuario_logado, 
+                tipo: tipo, 
+                lat: lat, 
+                lng: lng, 
+                is_he: is_he, 
+                motivo_he: motivo_he 
+            };
+
+            const res = await fetchAPI(`/ponto`, { 
+                method: 'POST', 
+                body: JSON.stringify(payload) 
+            });
+
+            // Trava de Arquitetura: Lê a falha exata do servidor caso ocorra
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Falha interna no banco de dados.");
+            }
+
+            alert("✅ Ponto registrado com sucesso!");
+            await atualizarStatusPontoUI(); 
+        }
+
         async function acionarPonto() {
             const btn = document.getElementById('btn-ponto');
             const txt = document.getElementById('txt-ponto-status');
             const tipoPonto = txt.innerText === "EM SERVIÇO" ? "Saída" : "Entrada";
             const textoOriginal = btn.innerText;
 
-            // Bloqueia a UI imediatamente para evitar duplo clique
             btn.innerText = "📍 OBTENDO GPS...";
             btn.classList.add('opacity-50', 'cursor-not-allowed');
             btn.disabled = true;
 
-            // Função de fallback para destravar a tela em caso de falha/cancelamento
             const abortarProcesso = (mensagemDeErro) => {
                 btn.innerText = textoOriginal;
                 btn.disabled = false;
@@ -739,16 +783,13 @@
                 if (mensagemDeErro) alert(mensagemDeErro);
             };
 
-            // TÁTICA DE ENGENHARIA: Watchdog Timer (Cão de Guarda)
-            // Se o GPS nativo do celular travar e não responder em 10 segundos, nós forçamos o cancelamento.
             let watchdog = setTimeout(() => {
-                abortarProcesso("⏳ O GPS do aparelho não respondeu. Verifique se a localização está ativada para o navegador e tente novamente.");
+                abortarProcesso("⏳ O GPS do aparelho não respondeu a tempo. Verifique sua conexão e tente novamente.");
             }, 10000);
 
             try {
-                if (!navigator.geolocation) throw new Error("Navegador sem suporte a GPS.");
+                if (!navigator.geolocation) throw new Error("Sem suporte a GPS.");
 
-                // Convertendo a chamada assíncrona antiga para Promise (Código mais limpo e tratável)
                 const position = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, {
                         enableHighAccuracy: true, 
@@ -757,30 +798,26 @@
                     });
                 });
 
-                // Se chegou aqui, o GPS funcionou! Cancelamos o Cão de Guarda.
                 clearTimeout(watchdog);
                 btn.innerText = "☁️ SALVANDO...";
-                
-                // Dispara pro backend
                 await enviarPonto(tipoPonto, position.coords.latitude, position.coords.longitude, "Não", "");
-                // Nota: Não precisamos destravar o botão aqui, pois o enviarPonto() já chama 
-                // a atualizarStatusPontoUI() que reescreve o botão com o novo status.
 
             } catch (error) {
-                // Se o GPS deu erro de permissão ou falhou
                 clearTimeout(watchdog);
                 
-                const confirmar = confirm("⚠️ Não foi possível obter sua localização exata (GPS desativado ou sem sinal). Deseja registrar o ponto assim mesmo?");
+                const confirmar = confirm("⚠️ Não foi possível obter sua localização exata. Deseja registrar o ponto assim mesmo (sem mapa)?");
                 
                 if (confirmar) {
                     try {
                         btn.innerText = "☁️ SALVANDO...";
+                        // Envia null para latitude e longitude
                         await enviarPonto(tipoPonto, null, null, "Não", "");
                     } catch (e) {
-                        abortarProcesso("Erro de conexão com o servidor. Tente novamente.");
+                        // Agora o sistema vai cuspir o erro exato para você ler na tela
+                        abortarProcesso("Erro ao salvar: " + (e.message || "Desconhecido."));
                     }
                 } else {
-                    abortarProcesso(); // Apenas destrava sem mensagem
+                    abortarProcesso();
                 }
             }
         }
