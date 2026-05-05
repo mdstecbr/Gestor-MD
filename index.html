@@ -719,49 +719,69 @@
             else { txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black"; btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; }
         }
 
-        // --- MOTOR DE PONTO E GPS ---
+        // --- MOTOR DE PONTO E GPS (VERSÃO BLINDADA) ---
         async function acionarPonto() {
             const btn = document.getElementById('btn-ponto');
             const txt = document.getElementById('txt-ponto-status');
-            
-            // Define se é Entrada ou Saída com base no que está escrito na tela
             const tipoPonto = txt.innerText === "EM SERVIÇO" ? "Saída" : "Entrada";
-            
-            // Tática de UX/Comercial: Feedback visual para o técnico não clicar duas vezes
             const textoOriginal = btn.innerText;
+
+            // Bloqueia a UI imediatamente para evitar duplo clique
             btn.innerText = "📍 OBTENDO GPS...";
             btn.classList.add('opacity-50', 'cursor-not-allowed');
             btn.disabled = true;
 
-            // Tenta capturar a localização exata do dispositivo
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        // Sucesso: Bate o ponto enviando a Latitude e Longitude
-                        await enviarPonto(tipoPonto, position.coords.latitude, position.coords.longitude, "Não", "");
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    },
-                    async (error) => {
-                        // Falha: Técnico com GPS desligado ou sem permissão
-                        console.warn("Erro de GPS:", error);
-                        const confirmar = confirm("⚠️ Não conseguimos obter sua localização (GPS desligado ou sem sinal). Deseja registrar o ponto mesmo assim?");
-                        
-                        if (confirmar) {
-                            await enviarPonto(tipoPonto, null, null, "Não", "");
-                        } else {
-                            btn.innerText = textoOriginal; // Cancela e devolve o texto original
-                        }
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 } // Força precisão máxima
-                );
-            } else {
-                alert("Seu navegador ou dispositivo não suporta captura de localização.");
-                await enviarPonto(tipoPonto, null, null, "Não", "");
+            // Função de fallback para destravar a tela em caso de falha/cancelamento
+            const abortarProcesso = (mensagemDeErro) => {
+                btn.innerText = textoOriginal;
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (mensagemDeErro) alert(mensagemDeErro);
+            };
+
+            // TÁTICA DE ENGENHARIA: Watchdog Timer (Cão de Guarda)
+            // Se o GPS nativo do celular travar e não responder em 10 segundos, nós forçamos o cancelamento.
+            let watchdog = setTimeout(() => {
+                abortarProcesso("⏳ O GPS do aparelho não respondeu. Verifique se a localização está ativada para o navegador e tente novamente.");
+            }, 10000);
+
+            try {
+                if (!navigator.geolocation) throw new Error("Navegador sem suporte a GPS.");
+
+                // Convertendo a chamada assíncrona antiga para Promise (Código mais limpo e tratável)
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true, 
+                        timeout: 8000, 
+                        maximumAge: 0 
+                    });
+                });
+
+                // Se chegou aqui, o GPS funcionou! Cancelamos o Cão de Guarda.
+                clearTimeout(watchdog);
+                btn.innerText = "☁️ SALVANDO...";
+                
+                // Dispara pro backend
+                await enviarPonto(tipoPonto, position.coords.latitude, position.coords.longitude, "Não", "");
+                // Nota: Não precisamos destravar o botão aqui, pois o enviarPonto() já chama 
+                // a atualizarStatusPontoUI() que reescreve o botão com o novo status.
+
+            } catch (error) {
+                // Se o GPS deu erro de permissão ou falhou
+                clearTimeout(watchdog);
+                
+                const confirmar = confirm("⚠️ Não foi possível obter sua localização exata (GPS desativado ou sem sinal). Deseja registrar o ponto assim mesmo?");
+                
+                if (confirmar) {
+                    try {
+                        btn.innerText = "☁️ SALVANDO...";
+                        await enviarPonto(tipoPonto, null, null, "Não", "");
+                    } catch (e) {
+                        abortarProcesso("Erro de conexão com o servidor. Tente novamente.");
+                    }
+                } else {
+                    abortarProcesso(); // Apenas destrava sem mensagem
+                }
             }
         }
 
