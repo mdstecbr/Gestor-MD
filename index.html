@@ -827,8 +827,32 @@
         }
 
         async function loadPontoAdmin() {
-            const res = await fetchAPI(`/ponto/admin`); const data = await res.json();
-            document.getElementById('tb-ponto-admin').innerHTML = data.map(p => `<tr class="hover:bg-slate-800 transition border-b border-slate-700/50"><td class="p-4 text-white font-bold">${p.tecnico}</td><td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td><td class="p-4 text-slate-400 text-xs">${new Date(p.data_hora).toLocaleString('pt-BR')}</td><td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}" target="_blank" class="text-brand hover:text-blue-400 underline text-xs font-bold"><i class="fa-solid fa-location-dot mr-1"></i>Ver Mapa</a>` : '-'}</td><td class="p-4 text-xs">${p.is_he === 'Sim' ? `<span class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded font-bold cursor-help" title="Motivo: ${p.motivo_he}">SIM <i class="fa-solid fa-circle-info ml-1"></i></span>` : `<span class="text-slate-600">Não</span>`}</td></tr>`).join('');
+            try {
+                // TÁTICA DE ENGENHARIA: Cache-Buster! O "?_t=" cria uma URL única baseada em milissegundos
+                // Isso obriga o navegador a sempre baixar os dados atualizados do servidor
+                const res = await fetchAPI(`/ponto/admin?_t=${new Date().getTime()}`); 
+                const data = await res.json();
+                
+                const tbody = document.getElementById('tb-ponto-admin');
+                if (!tbody) return; // Previne erro caso o HTML ainda não tenha carregado
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500 font-bold uppercase text-xs tracking-widest border-b border-slate-700/50">Nenhum registro encontrado hoje.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(p => `
+                    <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
+                        <td class="p-4 text-white font-bold">${p.tecnico}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${p.tipo==='Entrada'?'bg-emerald-500/10 text-emerald-500':'bg-red-500/10 text-red-500'}">${p.tipo}</span></td>
+                        <td class="p-4 text-slate-400 text-xs">${p.data_hora ? new Date(p.data_hora).toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-4">${p.latitude ? `<a href="https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}" target="_blank" class="text-brand hover:text-blue-400 underline text-xs font-bold"><i class="fa-solid fa-location-dot mr-1"></i>Ver Mapa</a>` : '-'}</td>
+                        <td class="p-4 text-xs">${p.is_he === 'Sim' ? `<span class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded font-bold cursor-help" title="Motivo: ${p.motivo_he}">SIM <i class="fa-solid fa-circle-info ml-1"></i></span>` : `<span class="text-slate-600">Não</span>`}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error("Falha ao carregar a tabela de ponto:", err);
+            }
         }
 
         function navegarSemanaTech(dir) { techCurrentWeekStart.setDate(techCurrentWeekStart.getDate() + (dir * 7)); loadTechWeekView(); }

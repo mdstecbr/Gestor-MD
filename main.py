@@ -479,15 +479,26 @@ def ponto_status(id_tecnico: int, usuario_logado: dict = Depends(token_valido)):
 @app.get("/api/ponto/admin")
 def list_ponto(usuario_logado: dict = Depends(token_valido)):
     with database.conectar() as conn:
+        # Usamos SQL puro sem Pandas para evitar bugs de serialização de data/hora
         query = """
-            SELECT p.*, COALESCE(u.nome, 'Técnico Excluído (Inativo)') as tecnico 
+            SELECT p.id, p.id_tecnico, p.tipo, p.latitude, p.longitude, 
+                   p.data_hora, p.is_he, p.motivo_he, 
+                   COALESCE(u.nome, 'Técnico Excluído') as tecnico 
             FROM registro_ponto p 
             LEFT JOIN usuarios u ON p.id_tecnico = u.id 
             ORDER BY p.id DESC LIMIT 200
         """
-        df = pd.read_sql_query(text(query), conn)
-    df = df.where(pd.notnull(df), None)
-    return df.to_dict(orient="records")
+        res = conn.execute(text(query)).mappings().fetchall()
+        
+    lista_pontos = []
+    for linha in res:
+        dados = dict(linha)
+        # Tratamento nativo do Python: Garante que a data vire texto puro pro JSON não quebrar
+        if dados.get("data_hora"):
+            dados["data_hora"] = str(dados["data_hora"]) 
+        lista_pontos.append(dados)
+        
+    return lista_pontos
 
 @app.get("/api/usuarios")
 def list_users(usuario_logado: dict = Depends(token_valido)):
