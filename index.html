@@ -724,6 +724,10 @@
                     const btn = document.getElementById('btn-ponto');
                     const txt = document.getElementById('txt-ponto-status');
                     
+                    // 🚀 A CORREÇÃO MÁGICA: Garante que o botão seja destravado sempre que a tela atualizar
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+
                     if (data.ultimo_registro === 'Entrada') { 
                         txt.innerText = "EM SERVIÇO"; 
                         txt.className = "text-emerald-400 font-black"; 
