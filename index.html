@@ -430,7 +430,9 @@
         <div class="p-4 bg-cardbg border-b border-slate-700 shrink-0 shadow-md">
             <div class="flex items-center justify-between bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
                 <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Estado de Ponto</p><p id="txt-ponto-status" class="text-white font-black text-sm">Verificando...</p></div>
-                <button id="btn-ponto" onclick="registrarPonto()" class="px-6 py-3 rounded-xl font-black text-xs transition active:scale-95 shadow-lg"></button>
+                <button id="btn-ponto" onclick="acionarPonto()" class="bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition">
+    INICIAR DIA
+</button>
             </div>
         </div>
 
@@ -717,7 +719,51 @@
             else { txt.innerText = "FORA DE SERVIÇO"; txt.className = "text-slate-500 font-black"; btn.innerText = "INICIAR DIA"; btn.className = "bg-brand hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-xs transition"; }
         }
 
-        async function enviarPonto(tipo, lat, lng, is_he, motivo_he) { await fetchAPI(`/ponto`, { method: 'POST', body: JSON.stringify({ id_tecnico: id_usuario_logado, tipo: tipo, lat: lat, lng: lng, is_he: is_he, motivo_he: motivo_he }) }); alert("Ponto registado!"); atualizarStatusPontoUI(); }
+        // --- MOTOR DE PONTO E GPS ---
+        async function acionarPonto() {
+            const btn = document.getElementById('btn-ponto');
+            const txt = document.getElementById('txt-ponto-status');
+            
+            // Define se é Entrada ou Saída com base no que está escrito na tela
+            const tipoPonto = txt.innerText === "EM SERVIÇO" ? "Saída" : "Entrada";
+            
+            // Tática de UX/Comercial: Feedback visual para o técnico não clicar duas vezes
+            const textoOriginal = btn.innerText;
+            btn.innerText = "📍 OBTENDO GPS...";
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.disabled = true;
+
+            // Tenta capturar a localização exata do dispositivo
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        // Sucesso: Bate o ponto enviando a Latitude e Longitude
+                        await enviarPonto(tipoPonto, position.coords.latitude, position.coords.longitude, "Não", "");
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    },
+                    async (error) => {
+                        // Falha: Técnico com GPS desligado ou sem permissão
+                        console.warn("Erro de GPS:", error);
+                        const confirmar = confirm("⚠️ Não conseguimos obter sua localização (GPS desligado ou sem sinal). Deseja registrar o ponto mesmo assim?");
+                        
+                        if (confirmar) {
+                            await enviarPonto(tipoPonto, null, null, "Não", "");
+                        } else {
+                            btn.innerText = textoOriginal; // Cancela e devolve o texto original
+                        }
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 } // Força precisão máxima
+                );
+            } else {
+                alert("Seu navegador ou dispositivo não suporta captura de localização.");
+                await enviarPonto(tipoPonto, null, null, "Não", "");
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
 
         async function loadPontoAdmin() {
             const res = await fetchAPI(`/ponto/admin`); const data = await res.json();
