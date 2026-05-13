@@ -627,29 +627,49 @@
         }
 
         // --- FINANCEIRO ---
-        async function loadFinanceiro() {
-            const res = await fetchAPI(`/financeiro${getQueryString()}`); arrayFinanceiro = await res.json();
-            document.getElementById('tb-financeiro').innerHTML = arrayFinanceiro.map(f => {
-                const entidade = f.tipo === 'Entrada' ? (f.nome_cliente || '<span class="text-slate-600 italic">Avulso</span>') : (f.nome_fornecedor || '<span class="text-slate-600 italic">Avulso</span>');
-                const iconeEntidade = f.tipo === 'Entrada' ? '<i class="fa-solid fa-building-user text-emerald-500 mr-1"></i>' : '<i class="fa-solid fa-truck-fast text-red-500 mr-1"></i>';
-                const dtEmissao = f.data_emissao ? formatData(f.data_emissao) : '-'; const dtPgto = f.data_pagamento ? formatData(f.data_pagamento) : '<span class="text-orange-400">Pendente</span>';
-                return `
-                <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
-                    <td class="p-4 text-xs text-slate-400"><div><span class="font-bold text-slate-500 uppercase text-[9px]">Emissão:</span> ${dtEmissao}</div><div class="mt-1"><span class="font-bold text-slate-500 uppercase text-[9px]">Pgto:</span> ${dtPgto}</div></td>
-                    <td class="p-4 text-white"><div class="flex items-center"><p class="font-bold">${f.descricao}</p>${f.id_os ? `<span class="ml-2 bg-brand/20 text-brand px-2 py-0.5 rounded text-[10px] font-black tracking-widest border border-brand/30">OS #${f.id_os}</span>` : ''}</div><p class="text-[10px] text-slate-500 mt-1 uppercase font-bold">${f.empresa} &bull; <span class="text-slate-400">${f.categoria || 'Sem categoria'}</span></p></td>
-                    <td class="p-4 text-xs text-slate-300 font-medium whitespace-nowrap">${iconeEntidade} ${entidade}</td>
-                    <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">${formatMoeda(f.valor)}</td>
-                    <td class="p-4 text-xs text-slate-400"><span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span><div class="text-[10px] mt-1 text-slate-500 uppercase font-bold">NF: <span class="text-slate-400">${f.status_nf}</span></div></td>
-                    <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-600'}"></i></td>
-                    <td class="p-4 text-center flex justify-center items-center mt-2 gap-3">
-                        ${f.status_pagamento !== 'Pago' ? `<button onclick="marcarComoPago(${f.id})" class="text-slate-400 hover:text-emerald-500 transform hover:scale-110 transition" title="Dar baixa"><i class="fa-solid fa-circle-check text-lg"></i></button>` : ''}
-                        <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 transform hover:scale-110 transition" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
-                        <button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deletarItem('financeiro', ${f.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`;
-            }).join('');
+                async function loadFinanceiro() {
+            try {
+                // Tática de Engenharia: Cache-Buster! Garante que sempre pegue os dados reais do banco
+                const queryStringAtual = getQueryString();
+                const separador = queryStringAtual ? '&' : '?';
+                const res = await fetchAPI(`/financeiro${queryStringAtual}${separador}_t=${new Date().getTime()}`); 
+                arrayFinanceiro = await res.json();
+                
+                const tbody = document.getElementById('tb-financeiro');
+                if (!tbody) return;
+
+                if (arrayFinanceiro.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 font-bold uppercase text-xs">Nenhum lançamento financeiro encontrado.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = arrayFinanceiro.map(f => {
+                    const entidade = f.tipo === 'Entrada' ? (f.nome_cliente || '<span class="text-slate-600 italic">Avulso</span>') : (f.nome_fornecedor || '<span class="text-slate-600 italic">Avulso</span>');
+                    const iconeEntidade = f.tipo === 'Entrada' ? '<i class="fa-solid fa-building-user text-emerald-500 mr-1"></i>' : '<i class="fa-solid fa-truck-fast text-red-500 mr-1"></i>';
+                    const dtEmissao = f.data_emissao ? formatData(f.data_emissao) : '-'; 
+                    const dtPgto = f.data_pagamento ? formatData(f.data_pagamento) : '<span class="text-orange-400">Pendente</span>';
+                    
+                    return `
+                    <tr class="hover:bg-slate-800 transition border-b border-slate-700/50">
+                        <td class="p-4 text-xs text-slate-400"><div><span class="font-bold text-slate-500 uppercase text-[9px]">Emissão:</span> ${dtEmissao}</div><div class="mt-1"><span class="font-bold text-slate-500 uppercase text-[9px]">Pgto:</span> ${dtPgto}</div></td>
+                        <td class="p-4 text-white"><div class="flex items-center"><p class="font-bold">${f.descricao}</p>${f.id_os ? `<span class="ml-2 bg-brand/20 text-brand px-2 py-0.5 rounded text-[10px] font-black tracking-widest border border-brand/30">OS #${f.id_os}</span>` : ''}</div><p class="text-[10px] text-slate-500 mt-1 uppercase font-bold">${f.empresa} • <span class="text-slate-400">${f.categoria || 'Sem categoria'}</span></p></td>
+                        <td class="p-4 text-xs text-slate-300 font-medium whitespace-nowrap">${iconeEntidade} ${entidade}</td>
+                        <td class="p-4 ${f.tipo==='Entrada'?'text-emerald-400':'text-red-400'} font-black">${formatMoeda(f.valor)}</td>
+                        <td class="p-4 text-xs text-slate-400"><span class="${f.status_pagamento === 'Pago' ? 'text-emerald-500' : 'text-orange-500'} font-bold">${f.status_pagamento}</span><div class="text-[10px] mt-1 text-slate-500 uppercase font-bold">NF: <span class="text-slate-400">${f.status_nf}</span></div></td>
+                        <td class="p-4 text-center"><i class="${f.conciliado==='Sim' ? 'fa-solid fa-check-double text-emerald-500' : 'fa-solid fa-clock text-slate-600'}"></i></td>
+                        <td class="p-4 text-center flex justify-center items-center mt-2 gap-3">
+                            ${f.status_pagamento !== 'Pago' ? `<button onclick="marcarComoPago(${f.id})" class="text-slate-400 hover:text-emerald-500 transform hover:scale-110 transition" title="Dar baixa"><i class="fa-solid fa-circle-check text-lg"></i></button>` : ''}
+                            <button onclick="previewComprovante(${f.id})" class="text-slate-400 hover:text-emerald-400 transform hover:scale-110 transition" title="Ver Comprovante"><i class="fa-solid fa-eye"></i></button>
+                            <button onclick="editarFin(${f.id})" class="text-slate-400 hover:text-brand transform hover:scale-110 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deletarItem('financeiro', ${f.id})" class="text-slate-400 hover:text-red-500 transform hover:scale-110 transition" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error("Erro ao carregar o financeiro:", err);
+            }
         }
+
 
         function abrirNovaFin() { document.getElementById('fin-id').value=""; document.getElementById('fin-desc').value=""; document.getElementById('fin-valor').value=""; document.getElementById('fin-id-os').value=""; document.getElementById('fin-conciliado').value="Não"; document.getElementById('fin-arquivos-list').innerHTML=""; abrirModal('modal-fin'); }
 
