@@ -240,6 +240,7 @@ def get_dashboard(inicio: Optional[str] = None, fim: Optional[str] = None, usuar
 @app.get("/api/financeiro")
 def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None, usuario_logado: dict = Depends(token_valido)):
     with database.conectar() as conn:
+        # Tática de Engenharia: Query nativa e limpa sem depender do Pandas
         query = """
             SELECT f.*, c.nome as nome_cliente, fo.nome as nome_fornecedor 
             FROM financeiro f
@@ -250,10 +251,21 @@ def list_financeiro(inicio: Optional[str] = None, fim: Optional[str] = None, usu
         if inicio and fim:
             query += " WHERE date(COALESCE(f.data_pagamento, f.data_registro)) BETWEEN :i AND :f"
             params = {"i": inicio, "f": fim}
+        
         query += " ORDER BY f.id DESC"
-        df = pd.read_sql_query(text(query), conn, params=params)
-    df = df.where(pd.notnull(df), None)
-    return df.to_dict(orient="records")
+        res = conn.execute(text(query), params).mappings().fetchall()
+        
+    lista_financeiro = []
+    for linha in res:
+        dados = dict(linha)
+        # Tratamento nativo: Converte as datas para string e evita quebra no JSON
+        for campo in ['data_emissao', 'data_pagamento', 'data_registro']:
+            if campo in dados and dados[campo] is not None:
+                dados[campo] = str(dados[campo])
+        lista_financeiro.append(dados)
+        
+    return lista_financeiro
+
 
 @app.post("/api/financeiro")
 def criar_financeiro(req: FinanceiroRequest, usuario_logado: dict = Depends(token_valido)):
